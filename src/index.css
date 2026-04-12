@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-luxury-gold: #D4AF37;
+  --color-luxury-cream: #F5F2ED;
+  --color-luxury-ink: #1A1A1A;
+  --color-luxury-maroon: #4A0404;
+}
+
+@layer base {
+  body {
+    @apply bg-luxury-cream text-luxury-ink font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.glass-panel {
+  @apply bg-white/10 backdrop-blur-md border border-white/20;
+}
+
+.luxury-button {
+  @apply px-8 py-3 bg-luxury-ink text-white font-sans text-sm tracking-widest uppercase transition-all hover:bg-luxury-gold hover:tracking-[0.2em];
+}
+
+.luxury-input {
+  @apply w-full bg-transparent border-b border-luxury-ink/20 py-2 focus:border-luxury-gold outline-none transition-colors font-serif italic text-lg;
+}
+
+.portfolio-button,
+.portfolio-button--secondary,
+.portfolio-button--text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.portfolio-button {
+  padding: 0.75rem 1.5rem;
+  background: var(--color-luxury-ink);
+  color: white;
+  border-color: transparent;
+}
+
+.portfolio-button:hover,
+.portfolio-button:focus-visible {
+  background: var(--color-luxury-gold);
+  color: var(--color-luxury-ink);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.18);
+}
+
+.portfolio-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.portfolio-button--secondary {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: var(--color-luxury-ink);
+  border-color: rgba(26, 26, 26, 0.15);
+}
+
+.portfolio-button--secondary:hover,
+.portfolio-button--secondary:focus-visible {
+  background: rgba(26, 26, 26, 0.08);
+}
+
+.portfolio-button--text {
+  padding: 0;
+  background: transparent;
+  color: var(--color-luxury-ink);
+  border-color: transparent;
+}
+
+.portfolio-button--text:hover,
+.portfolio-button--text:focus-visible {
+  color: var(--color-luxury-gold);
+}
+
+.portfolio-button--text svg {
+  transition: transform 0.2s ease;
+}
+
+.portfolio-button--text:hover svg {
+  transform: translateX(0.25rem);
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+  gap: 2rem;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.marquee-track {
+  gap: 2rem;
+}
+
+/* Prevent marquee container from causing horizontal scroll */
+.marquee-track {
+  will-change: transform;
+}
