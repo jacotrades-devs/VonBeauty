@@ -9,41 +9,49 @@ import Service4 from '../assets/img/WeddingCat.png';
 const services = [
   {
     title: "Event Makeup",
-    description: "Perfect for birthdays, parties, and special occasions.",
+    description: "Perfect for birthdays, parties, and special occasions where you want to stand out with a polished, professional look.",
     image: Service1,
     alt: "Professional event makeup artistry",
     tag: "01",
-    categories: ["Natural", "Gloss", "Bold", "Shimmer"]
+    price: "₱1,500",
+    categories: ["Natural", "Gloss", "Bold", "Shimmer"],
+    features: ["Skin Prep & Priming", "Custom Lash Application", "Long-wear Setting", "Touch-up Kit Included"]
   },
   {
     title: "Pageant Makeup",
-    description: "Glam and stage-ready makeup for pageants and competitions.",
+    description: "Glam and stage-ready makeup designed to enhance your features under intense lighting and high-definition cameras.",
     image: Service2,
     alt: "Glamorous pageant competition makeup",
     tag: "02",
-    categories: ["Classic Glam", "Modern Glam", "Theatrical", "Avant-Garde"]
+    price: "₱2,500",
+    categories: ["Classic Glam", "Modern Glam", "Theatrical", "Avant-Garde"],
+    features: ["Contouring for Stage", "High-Definition Finish", "Waterproof Formula", "Stage Presence Consultation"]
   },
   {
     title: "Photoshoot Makeup",
-    description: "Professional makeup designed for studio and outdoor photoshoots.",
+    description: "Professional makeup designed specifically for studio and outdoor photography, ensuring a flawless finish in every frame.",
     image: Service3,
     alt: "Professional photoshoot makeup application",
     tag: "03",
-    categories: ["Studio", "Outdoor", "Fashion", "Beauty"]
+    price: "₱2,000",
+    categories: ["Studio", "Outdoor", "Fashion", "Beauty"],
+    features: ["Camera-Ready Finish", "On-set Touch-ups", "Lighting Adjustment", "Creative Direction Support"]
   },
   {
     title: "Bridal Makeup",
-    description: "Elegant and long-lasting makeup for brides and wedding events.",
+    description: "Elegant, timeless, and long-lasting makeup for brides. We focus on creating a look that reflects your personal style.",
     image: Service4,
     alt: "Beautiful bridal wedding day makeup",
     tag: "04",
-    categories: ["Classic", "Modern", "Romantic", "Ethereal"]
+    price: "₱5,000",
+    categories: ["Classic", "Modern", "Romantic", "Ethereal"],
+    features: ["Bridal Consultation", "Trial Session Available", "Premium Skincare Prep", "Bridal Party Packages"]
   }
 ];
 
 interface ServicesProps {
   uploadedImages: UploadedImage[];
-  setSelectedImage: (img: string | null) => void;
+  setSelectedImage: (img: { src: string; category?: string } | null) => void;
 }
 
 export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) => {
@@ -75,8 +83,8 @@ export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) =>
 
   const s = services[active];
   
-  // Filter uploaded images by the current service title
-  const filteredImages = uploadedImages.filter(img => img.category === s.title);
+  // Filter uploaded images by the current service title and visibility
+  const filteredImages = uploadedImages.filter(img => img.category === s.title && !img.isHidden);
 
   return (
     <section
@@ -155,10 +163,17 @@ export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) =>
                 <motion.h3
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.22 }}
-                  className="text-2xl font-serif italic text-luxury-ink mb-3 leading-snug"
+                  className="text-2xl font-serif italic text-luxury-ink mb-1 leading-snug"
                 >
                   {s.title}
                 </motion.h3>
+                <motion.p
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  transition={{ delay: 0.25 }}
+                  className="text-luxury-gold font-serif italic text-lg mb-3"
+                >
+                  Starting at {s.price}
+                </motion.p>
                 <motion.div
                   initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
                   transition={{ delay: 0.28, duration: 0.35 }}
@@ -167,10 +182,24 @@ export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) =>
                 <motion.p
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.33 }}
-                  className="text-luxury-ink/55 font-light text-sm leading-relaxed mb-5"
+                  className="text-luxury-ink/55 font-light text-sm leading-relaxed mb-6"
                 >
                   {s.description}
                 </motion.p>
+
+                {/* Features List (Mobile) */}
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="space-y-2 mb-6"
+                >
+                  {s.features?.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-[10px] text-luxury-ink/70">
+                      <div className="w-1 h-1 rounded-full bg-luxury-gold" />
+                      {feature}
+                    </div>
+                  ))}
+                </motion.div>
                 
                 {/* Recent Work Gallery (Mobile) */}
                 {filteredImages.length > 0 && (
@@ -181,7 +210,7 @@ export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) =>
                         <div 
                           key={img.id} 
                           className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-luxury-ink/5 cursor-zoom-in"
-                          onClick={() => setSelectedImage(img.src)}
+                          onClick={() => setSelectedImage({ src: img.src, category: img.category })}
                         >
                           <img src={img.src} alt="Recent work" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         </div>
@@ -235,10 +264,17 @@ export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) =>
                 <motion.h3
                   initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.26 }}
-                  className="text-4xl xl:text-5xl font-serif italic text-luxury-ink mb-5 leading-tight"
+                  className="text-4xl xl:text-5xl font-serif italic text-luxury-ink mb-2 leading-tight"
                 >
                   {s.title}
                 </motion.h3>
+                <motion.p
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-luxury-gold font-serif italic text-2xl mb-5"
+                >
+                  Starting at {s.price}
+                </motion.p>
                 <motion.div
                   initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
                   transition={{ delay: 0.33, duration: 0.4 }}
@@ -247,10 +283,24 @@ export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) =>
                 <motion.p
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.38 }}
-                  className="text-luxury-ink/60 font-light text-base leading-relaxed mb-8 max-w-sm"
+                  className="text-luxury-ink/60 font-light text-base leading-relaxed mb-6 max-w-sm"
                 >
                   {s.description}
                 </motion.p>
+
+                {/* Features List (Desktop) */}
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.42 }}
+                  className="grid grid-cols-2 gap-x-6 gap-y-3 mb-8"
+                >
+                  {s.features?.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-3 text-xs text-luxury-ink/70 group">
+                      <div className="w-1.5 h-1.5 rounded-full bg-luxury-gold/40 group-hover:bg-luxury-gold transition-colors" />
+                      {feature}
+                    </div>
+                  ))}
+                </motion.div>
 
                 {/* Recent Work Gallery (Desktop) */}
                 {filteredImages.length > 0 && (
@@ -261,7 +311,7 @@ export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) =>
                         <div 
                           key={img.id} 
                           className="aspect-square rounded-xl overflow-hidden border border-luxury-ink/5 group relative cursor-zoom-in"
-                          onClick={() => setSelectedImage(img.src)}
+                          onClick={() => setSelectedImage({ src: img.src, category: img.category })}
                         >
                           <img src={img.src} alt="Recent work" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" referrerPolicy="no-referrer" />
                         </div>
@@ -272,17 +322,27 @@ export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) =>
 
                 <motion.div
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.46 }}
-                  className="grid grid-cols-2 gap-3"
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-col gap-6"
                 >
-                  {s.categories.map((cat, idx) => (
-                    <button
-                      key={idx}
-                      className="px-4 py-3 border border-luxury-gold/40 rounded-lg text-luxury-ink text-sm font-light hover:bg-luxury-gold hover:text-white transition-all duration-200 focus:outline-none"
-                    >
-                      {cat}
-                    </button>
-                  ))}
+                  <div className="grid grid-cols-2 gap-3">
+                    {s.categories.map((cat, idx) => (
+                      <button
+                        key={idx}
+                        className="px-4 py-3 border border-luxury-gold/40 rounded-lg text-luxury-ink text-sm font-light hover:bg-luxury-gold hover:text-white transition-all duration-200 focus:outline-none"
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button 
+                    onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="luxury-button w-full flex items-center justify-center gap-3 group"
+                  >
+                    Book {s.title}
+                    <div className="w-5 h-px bg-white/40 group-hover:w-8 transition-all duration-300" />
+                  </button>
                 </motion.div>
               </div>
             </div>

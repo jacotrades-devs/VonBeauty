@@ -27,7 +27,8 @@ export const ImageUploadForm = ({
     'Event Makeup',
     'Pageant Makeup',
     'Photoshoot Makeup',
-    'Bridal Makeup'
+    'Bridal Makeup',
+    'Transformation'
   ];
 
   const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -80,8 +81,8 @@ export const ImageUploadForm = ({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-serif italic">{title}</h3>
-        <p className="text-[10px] tracking-[0.3em] uppercase text-luxury-ink/40 mt-1">
+        <h3 className="text-xl md:text-2xl font-serif italic">{title}</h3>
+        <p className="text-[9px] md:text-[10px] tracking-[0.3em] uppercase text-luxury-ink/40 mt-1">
           {description}
         </p>
       </div>
