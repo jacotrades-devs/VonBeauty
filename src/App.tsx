@@ -21,7 +21,7 @@ export default function App() {
   const [userRole, setUserRole] = useState<'guest' | 'client' | 'admin'>('guest');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'home' | 'dashboard'>('home');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{ src: string; category?: string } | null>(null);
   
   // Lifted state
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -106,6 +106,14 @@ export default function App() {
     setUserRole('guest');
     setUserEmail(null);
     setCurrentView('home');
+  };
+
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = (src: string) => {
+    navigator.clipboard.writeText(src);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -281,13 +289,38 @@ export default function App() {
               onClick={(e) => e.stopPropagation()}
             >
               <img
-                src={selectedImage}
-                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10"
+                src={selectedImage.src}
+                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl border border-white/10"
                 alt="Enlarged Portfolio"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute -bottom-12 left-0 right-0 text-center">
-                <p className="text-white/40 text-[10px] uppercase tracking-[0.5em]">Von</p>
+              <div className="absolute -bottom-24 left-0 right-0 flex flex-col items-center gap-4">
+                {selectedImage.category && (
+                  <p className="text-luxury-gold text-xs uppercase tracking-[0.4em] font-medium">
+                    {selectedImage.category}
+                  </p>
+                )}
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => {
+                      setSelectedImage(null);
+                      setIsGalleryOpen(false);
+                      document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="luxury-button !py-2 !px-6 text-[10px]"
+                  >
+                    Book This Look
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShare(selectedImage.src);
+                    }}
+                    className="px-6 py-2 border border-white/20 rounded-full text-white text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all min-w-[100px]"
+                  >
+                    {copied ? 'Copied!' : 'Share'}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

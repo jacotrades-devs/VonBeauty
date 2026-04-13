@@ -17,7 +17,7 @@ import image11 from '../assets/img/album/6240061348054240847.jpg';
 
 interface PortfolioProps {
   setIsGalleryOpen: (isOpen: boolean) => void;
-  setSelectedImage: (img: string | null) => void;
+  setSelectedImage: (img: { src: string; category?: string } | null) => void;
   isAuthenticated: boolean;
   userRole: 'guest' | 'client' | 'admin';
   uploadedImages: UploadedImage[];
@@ -25,8 +25,12 @@ interface PortfolioProps {
 
 export const Portfolio = ({ setIsGalleryOpen, setSelectedImage, isAuthenticated, userRole, uploadedImages }: PortfolioProps) => {
   const staticPortfolio = [image1, image2, image3];
+  const visibleUploaded = uploadedImages.filter(img => !img.isHidden);
   // Show a mix of static and uploaded if available
-  const displayPortfolio = [...staticPortfolio, ...uploadedImages.slice(0, 3).map(img => img.src)].slice(0, 3);
+  const allImagesWithMeta = [
+    ...staticPortfolio.map((src, i) => ({ src, category: ['Event Makeup', 'Pageant Makeup', 'Photoshoot Makeup'][i] as ServiceCategory })),
+    ...visibleUploaded.slice(0, 3).map(img => ({ src: img.src, category: img.category }))
+  ].slice(0, 3);
 
   return (
     <section id="gallery" className="py-24 px-6 max-w-7xl mx-auto">
@@ -43,21 +47,24 @@ export const Portfolio = ({ setIsGalleryOpen, setSelectedImage, isAuthenticated,
       </div>
 
       <div className="columns-1 sm:columns-2 md:columns-3 gap-4 md:gap-8 space-y-4 md:space-y-8">
-        {displayPortfolio.map((img, i) => (
+        {allImagesWithMeta.map((imgObj, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            onClick={() => setSelectedImage(img)}
-            className="break-inside-avoid mb-4 md:mb-8 overflow-hidden rounded-xl cursor-zoom-in group"
+            onClick={() => setSelectedImage({ src: imgObj.src, category: imgObj.category })}
+            className="break-inside-avoid mb-4 md:mb-8 overflow-hidden rounded-xl cursor-zoom-in group relative"
           >
             <img
-              src={img}
+              src={imgObj.src}
               className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
               alt={`Haus of Von Beauty portfolio makeup showcase ${i + 1}`}
               referrerPolicy="no-referrer"
             />
+            <div className="absolute bottom-4 left-4 bg-luxury-ink/60 backdrop-blur-sm text-[8px] text-white uppercase tracking-widest px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+              {imgObj.category}
+            </div>
           </motion.div>
         ))}
       </div>
@@ -68,7 +75,7 @@ export const Portfolio = ({ setIsGalleryOpen, setSelectedImage, isAuthenticated,
 interface FullGalleryProps {
   isOpen: boolean;
   onClose: () => void;
-  setSelectedImage: (img: string | null) => void;
+  setSelectedImage: (img: { src: string; category?: string } | null) => void;
   isAuthenticated: boolean;
   userRole: 'guest' | 'client' | 'admin';
   uploadedImages: UploadedImage[];
@@ -77,17 +84,32 @@ interface FullGalleryProps {
 
 export const FullGallery = ({ isOpen, onClose, setSelectedImage, isAuthenticated, userRole, uploadedImages, setUploadedImages }: FullGalleryProps) => {
   const staticImages = [
-    image1, image2, image3, image4,
-    image5, image6, image7, image8,
-    image9, image10, image11,
+    { src: image1, category: 'Event Makeup' as ServiceCategory },
+    { src: image2, category: 'Pageant Makeup' as ServiceCategory },
+    { src: image3, category: 'Photoshoot Makeup' as ServiceCategory },
+    { src: image4, category: 'Bridal Makeup' as ServiceCategory },
+    { src: image5, category: 'Event Makeup' as ServiceCategory },
+    { src: image6, category: 'Pageant Makeup' as ServiceCategory },
+    { src: image7, category: 'Photoshoot Makeup' as ServiceCategory },
+    { src: image8, category: 'Bridal Makeup' as ServiceCategory },
+    { src: image9, category: 'Event Makeup' as ServiceCategory },
+    { src: image10, category: 'Pageant Makeup' as ServiceCategory },
+    { src: image11, category: 'Photoshoot Makeup' as ServiceCategory },
   ];
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  const categories = ['All', 'Event Makeup', 'Pageant Makeup', 'Photoshoot Makeup', 'Bridal Makeup', 'Transformation'];
 
   const allImages: { src: string; category?: string; isUploaded: boolean; id?: string }[] = [
-    ...staticImages.map(src => ({ src, isUploaded: false })),
-    ...uploadedImages.map((u) => ({ src: u.src, category: u.category, isUploaded: true, id: u.id })),
+    ...staticImages.map(img => ({ ...img, isUploaded: false })),
+    ...uploadedImages.filter(u => !u.isHidden).map((u) => ({ src: u.src, category: u.category, isUploaded: true, id: u.id })),
   ];
+
+  const filteredImages = selectedCategory === 'All' 
+    ? allImages 
+    : allImages.filter(img => img.category === selectedCategory);
 
   const removeUploaded = (id: string) => {
     setUploadedImages((prev) => {
@@ -129,8 +151,25 @@ export const FullGallery = ({ isOpen, onClose, setSelectedImage, isAuthenticated
 
           {/* Gallery Grid */}
           <div className="max-w-7xl mx-auto p-8 md:p-16">
+            {/* Category Filter */}
+            <div className="flex flex-wrap justify-center gap-3 mb-12">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-6 py-2 rounded-full text-[10px] uppercase tracking-[0.2em] transition-all duration-300 ${
+                    selectedCategory === cat
+                      ? 'bg-luxury-gold text-white shadow-lg'
+                      : 'bg-white text-luxury-ink/40 hover:text-luxury-ink border border-luxury-ink/5'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             <div className="columns-2 md:columns-3 lg:columns-4 gap-8 space-y-8">
-              {allImages.map((imgObj, i) => {
+              {filteredImages.map((imgObj, i) => {
                 return (
                   <motion.div
                     key={imgObj.id || i}
@@ -141,7 +180,7 @@ export const FullGallery = ({ isOpen, onClose, setSelectedImage, isAuthenticated
                   >
                     <img
                       src={imgObj.src}
-                      onClick={() => setSelectedImage(imgObj.src)}
+                      onClick={() => setSelectedImage({ src: imgObj.src, category: imgObj.category })}
                       className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110"
                       alt={`Portfolio image ${i + 1}`}
                       referrerPolicy="no-referrer"
