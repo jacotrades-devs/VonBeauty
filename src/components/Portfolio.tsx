@@ -33,16 +33,6 @@ export const Portfolio = ({ setIsGalleryOpen, setSelectedImage, isAuthenticated,
       <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
         <div>
           <h2 className="text-5xl font-serif italic">The Gallery</h2>
-          {!isAuthenticated && (
-            <p className="mt-4 max-w-xl text-sm text-luxury-ink/60">
-              Uploads are reserved for admin users only. Sign in as admin to add photos to the gallery.
-            </p>
-          )}
-          {userRole === 'client' && (
-            <p className="mt-4 max-w-xl text-sm text-luxury-ink/60">
-              As a client, you can view the gallery but uploads are restricted to admins only.
-            </p>
-          )}
         </div>
         <button
           onClick={() => setIsGalleryOpen(true)}
@@ -119,18 +109,14 @@ export const FullGallery = ({ isOpen, onClose, setSelectedImage, isAuthenticated
           {/* Header */}
           <div className="sticky top-0 z-10 p-8 flex justify-between items-center bg-luxury-cream/80 backdrop-blur-md border-b border-luxury-ink/5">
             <h2 className="text-3xl font-serif italic">The Complete Collection</h2>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-3">
-              <button
-                onClick={() => userRole === 'admin' && setIsUploadOpen(true)}
-                disabled={userRole !== 'admin'}
-                className={`portfolio-button ${userRole !== 'admin' ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                Add Photos
-              </button>
-              {userRole !== 'admin' && (
-                <p className="text-xs text-luxury-ink/50 uppercase tracking-[0.3em] mt-1 sm:mt-0">
-                  Admin access required to upload images.
-                </p>
+            <div className="flex items-center gap-6">
+              {userRole === 'admin' && (
+                <button
+                  onClick={() => setIsUploadOpen(true)}
+                  className="portfolio-button"
+                >
+                  Add Photos
+                </button>
               )}
               <button 
                 onClick={onClose}
@@ -193,20 +179,22 @@ export const FullGallery = ({ isOpen, onClose, setSelectedImage, isAuthenticated
                 );
               })}
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                onClick={() => userRole === 'admin' && setIsUploadOpen(true)}
-                className={`break-inside-avoid mb-8 rounded-xl border-2 border-dashed transition-colors duration-300 flex flex-col items-center justify-center min-h-[160px] gap-3 group ${userRole === 'admin' ? 'border-luxury-ink/20 hover:border-luxury-gold/60 cursor-pointer' : 'border-luxury-ink/10 bg-luxury-ink/5 cursor-not-allowed opacity-60'}`}
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${userRole === 'admin' ? 'bg-luxury-ink/5 group-hover:bg-luxury-gold/10' : 'bg-luxury-ink/20'}`}>
-                  <Plus size={20} className={`transition-colors duration-300 ${userRole === 'admin' ? 'text-luxury-ink/40 group-hover:text-luxury-gold' : 'text-luxury-ink/30'}`} />
-                </div>
-                <span className="text-xs tracking-widest uppercase transition-colors duration-300">
-                  {userRole === 'admin' ? 'Add Photos' : 'Admin only'}
-                </span>
-              </motion.div>
+              {userRole === 'admin' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  onClick={() => setIsUploadOpen(true)}
+                  className="break-inside-avoid mb-8 rounded-xl border-2 border-dashed transition-colors duration-300 flex flex-col items-center justify-center min-h-[160px] gap-3 group border-luxury-ink/20 hover:border-luxury-gold/60 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 bg-luxury-ink/5 group-hover:bg-luxury-gold/10">
+                    <Plus size={20} className="transition-colors duration-300 text-luxury-ink/40 group-hover:text-luxury-gold" />
+                  </div>
+                  <span className="text-xs tracking-widest uppercase transition-colors duration-300">
+                    Add Photos
+                  </span>
+                </motion.div>
+              )}
             </div>
 
             <div className="mt-24 text-center pb-16">

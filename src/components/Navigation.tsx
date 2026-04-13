@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 
 interface NavigationProps {
   isMenuOpen: boolean;
@@ -37,9 +37,10 @@ export const Navigation = ({ isMenuOpen, setIsMenuOpen, onAuthRequest, onDashboa
             {userRole === 'guest' ? (
               <button
                 onClick={() => onAuthRequest()}
-                className="text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white cursor-pointer transition-colors"
+                className="p-2 rounded-full border border-white/20 text-white/60 hover:text-luxury-gold hover:border-luxury-gold transition-all duration-300 cursor-pointer group"
+                title="Admin Login"
               >
-                Admin
+                <User size={18} className="group-hover:scale-110 transition-transform" />
               </button>
             ) : (
               <div className="flex items-center gap-4">
