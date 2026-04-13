@@ -8,28 +8,98 @@ import { Hero } from './components/Hero';
 import { AuthModal } from './components/AuthModal';
 import { Dashboard } from './components/Dashboard';
 import { About } from './components/About';
-// import { Process } from './components/Process';
 import { Services } from './components/Services';
 import { Portfolio, FullGallery } from './components/Portfolio';
 import { Testimonials } from './components/Testimonials';
 import { Footer } from './components/Footer';
+import { UploadedImage, BookingData, Testimonial } from './types';
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<'guest' | 'client' | 'admin'>('guest');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'home' | 'dashboard'>('home');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Lifted state
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [bookings, setBookings] = useState<BookingData[]>([
+    {
+      id: 'BKG-001',
+      name: 'Ariella Stone',
+      email: 'ariella@example.com',
+      service: 'Bridal Makeup',
+      date: '2026-05-10',
+      time: '10:00',
+      status: 'Confirmed',
+    },
+    {
+      id: 'BKG-002',
+      name: 'Mila Hart',
+      email: 'mila@example.com',
+      service: 'Photoshoot Makeup',
+      date: '2026-05-15',
+      time: '14:30',
+      status: 'Pending',
+    },
+    {
+      id: 'BKG-003',
+      name: 'Noah Rae',
+      email: 'noah@example.com',
+      service: 'Event Makeup',
+      date: '2026-05-21',
+      time: '18:00',
+      status: 'Confirmed',
+    },
+  ]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([
+    {
+      id: 'T-001',
+      quote: "Gooodmorningggg mother thankyouu sa makeup sobrang ganda talga 🥹🤍, Sana pag ikakasal akoo nag mamakeup kapa wahahaha... Congrats pala mom",
+      author: "Sheela Reniedo",
+      role: "Client",
+      rating: 5,
+      image: "https://i.pinimg.com/736x/df/93/58/df935859be8accbcc15d559365d55570.jpg",
+      status: 'approved'
+    },
+    {
+      id: 'T-002',
+      quote: "Hello sir. Just wanted to thank you for the amazing make up yesterday. Ang fresh tignan. Dami rin po nakaappreciate ng look ko kahapon. Thank you po ulit 🥰",
+      author: "Client",
+      role: "Private Client",
+      rating: 5,
+      image: "https://i.pinimg.com/736x/df/93/58/df935859be8accbcc15d559365d55570.jpg",
+      status: 'approved'
+    },
+    {
+      id: 'T-003',
+      quote: "Ate wil, thank you pati sa anak u very satisfied ang gawa nya pati si dainnielle nagandahan ❤️. Sa Graduation daw ulit pa make up ulit kay kuya von niya 😊 sabi nya saken mama magpabook kana kay kuya von for graduation, Thank you again ate will ❤️",
+      author: "Elena Wright",
+      role: "Client",
+      rating: 5,
+      image: "https://i.pinimg.com/736x/df/93/58/df935859be8accbcc15d559365d55570.jpg",
+      status: 'approved'
+    },
+    {
+      id: 'T-004',
+      quote: "The makeup was absolutely stunning! I felt like a queen on my special day. Can't wait for my next booking!",
+      author: "Maria Santos",
+      role: "Client",
+      rating: 5,
+      image: "https://i.pinimg.com/736x/df/93/58/df935859be8accbcc15d559365d55570.jpg",
+      status: 'pending'
+    }
+  ]);
 
   const isAuthenticated = userRole !== 'guest';
 
-  const handleAuthSubmit = (role: 'admin' | 'client', email: string) => {
-    setUserRole(role);
+  const handleAuthSubmit = (email: string) => {
+    setUserRole('admin');
     setUserEmail(email);
     setCurrentView('dashboard');
-    setAuthModalMode(null);
+    setIsAuthModalOpen(false);
   };
 
   const handleLogout = () => {
@@ -40,18 +110,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen overflow-x-hidden selection:bg-luxury-gold selection:text-white">
-      <Navigation
-        isMenuOpen={isMenuOpen}
-        setIsMenuOpen={setIsMenuOpen}
-        onAuthRequest={setAuthModalMode}
-        userRole={userRole}
-        onLogout={handleLogout}
-      />
+      {currentView !== 'dashboard' && (
+        <Navigation
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+          onAuthRequest={() => setIsAuthModalOpen(true)}
+          onDashboardRequest={() => setCurrentView('dashboard')}
+          userRole={userRole}
+          onLogout={handleLogout}
+        />
+      )}
       <AuthModal
-        isOpen={!!authModalMode}
-        mode={authModalMode ?? 'signin'}
-        onClose={() => setAuthModalMode(null)}
-        onModeChange={setAuthModalMode}
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
         onSubmit={handleAuthSubmit}
       />
 
@@ -80,7 +151,7 @@ export default function App() {
             {userRole === 'guest' ? (
               <button
                 onClick={() => {
-                  setAuthModalMode('signin');
+                  setIsAuthModalOpen(true);
                   setIsMenuOpen(false);
                 }}
                 className="text-white uppercase tracking-[0.3em] border border-white/20 rounded-full px-5 py-3 hover:border-luxury-gold transition-colors"
@@ -88,15 +159,26 @@ export default function App() {
                 Admin Login
               </button>
             ) : (
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMenuOpen(false);
-                }}
-                className="text-white uppercase tracking-[0.3em] border border-white/20 rounded-full px-5 py-3 hover:border-luxury-gold transition-colors"
-              >
-                Logout
-              </button>
+              <div className="flex flex-col items-center gap-6">
+                <button
+                  onClick={() => {
+                    setCurrentView('dashboard');
+                    setIsMenuOpen(false);
+                  }}
+                  className="text-luxury-gold uppercase tracking-[0.3em] hover:text-white transition-colors"
+                >
+                  Go to Dashboard
+                </button>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="text-white uppercase tracking-[0.3em] border border-white/20 rounded-full px-5 py-3 hover:border-luxury-gold transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
             )}
           </motion.div>
         )}
@@ -107,6 +189,12 @@ export default function App() {
           role={userRole}
           email={userEmail}
           onBack={() => setCurrentView('home')}
+          bookings={bookings}
+          setBookings={setBookings}
+          testimonials={testimonials}
+          setTestimonials={setTestimonials}
+          uploadedImages={uploadedImages}
+          setUploadedImages={setUploadedImages}
         />
       ) : (
         <>
@@ -128,15 +216,22 @@ export default function App() {
 
           <About />
           {/* <Process /> */}
-          <Services />
+          <Services 
+            uploadedImages={uploadedImages} 
+            setSelectedImage={setSelectedImage}
+          />
           <Portfolio
             setIsGalleryOpen={setIsGalleryOpen}
             setSelectedImage={setSelectedImage}
             isAuthenticated={isAuthenticated}
             userRole={userRole}
+            uploadedImages={uploadedImages}
           />
-          <Testimonials />
-          <Booking />
+          <Testimonials 
+            testimonials={testimonials} 
+            setTestimonials={setTestimonials} 
+          />
+          <Booking onBookingSubmit={(newBooking) => setBookings(prev => [...prev, newBooking])} />
           <Contact />
           <Footer />
         </>
@@ -149,6 +244,8 @@ export default function App() {
         setSelectedImage={setSelectedImage} 
         isAuthenticated={isAuthenticated}
         userRole={userRole}
+        uploadedImages={uploadedImages}
+        setUploadedImages={setUploadedImages}
       />
 
       {/* Lightbox Modal */}

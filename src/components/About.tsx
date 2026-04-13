@@ -42,15 +42,15 @@ export const About = () => {
         <p className="text-base sm:text-lg text-luxury-ink/70 leading-relaxed font-light">
           Hi, I'm Von, a passionate makeup artist who loves enhancing natural beauty while bringing out confidence in every client. I specialize in glam, soft glam, and event makeup for special occasions such as pageants, photoshoots, and celebrations. My goal is to make every client feel beautiful, confident, and camera-ready for their special moments.
         </p>
-        <div className="flex justify-center md:justify-start gap-4 md:gap-8 pt-4 flex-nowrap overflow-x-auto">
-          <a href="https://www.instagram.com/jv_eugenio?igsh=MWhsZzlqdnV6bDF4NQ%3D%3D&utm_source=qr" className="group flex items-center gap-3 text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
-            <Instagram size={18} /> @jv_eugenio
+        <div className="flex flex-wrap justify-center md:justify-start gap-y-4 gap-x-6 md:gap-8 pt-4">
+          <a href="https://www.instagram.com/jv_eugenio?igsh=MWhsZzlqdnV6bDF4NQ%3D%3D&utm_source=qr" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
+            <Instagram size={18} className="text-luxury-gold" /> @jv_eugenio
           </a>
-          <a href="https://www.facebook.com/share/1Fw38PYQga/?mibextid=wwXIfr" className="group flex items-center gap-3 text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
-            <Facebook size={18} /> @Von Eugenio
+          <a href="https://www.facebook.com/share/1Fw38PYQga/?mibextid=wwXIfr" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
+            <Facebook size={18} className="text-luxury-gold" /> @Von Eugenio
           </a>
-          <a href="https://www.tiktok.com/@jhon_jv_von?_r=1&_t=ZS-95IoqIEc1dl" className="group flex items-center gap-3 text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
-            <RiTiktokLine size={18} /> @jhon_jv_von
+          <a href="https://www.tiktok.com/@jhon_jv_von?_r=1&_t=ZS-95IoqIEc1dl" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
+            <RiTiktokLine size={18} className="text-luxury-gold" /> @jhon_jv_von
           </a>
         </div>
       </motion.div>
