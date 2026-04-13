@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import artistImg from '../assets/img/hero-bg.jpeg';
+import artistImg from '../assets/img/VonBG.png';
 
 export const Hero = () => {
   return (
@@ -38,11 +38,15 @@ export const Hero = () => {
           <span className="text-luxury-gold">Von</span> Beauty
         </motion.h1>
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-6"
         >
-          <a href="#contact" className="luxury-button inline-block">
+          <a href="#booking" className="luxury-button inline-block min-w-[200px] bg-luxury-gold text-luxury-ink border-luxury-gold hover:bg-transparent hover:text-luxury-gold">
+            Book Now
+          </a>
+          <a href="#contact" className="luxury-button inline-block min-w-[200px]">
             Contact Me
           </a>
         </motion.div>

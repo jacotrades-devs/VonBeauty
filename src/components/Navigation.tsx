@@ -5,12 +5,13 @@ import { Menu, X } from 'lucide-react';
 interface NavigationProps {
   isMenuOpen: boolean;
   setIsMenuOpen: (isOpen: boolean) => void;
-  onAuthRequest: (mode: 'signin' | 'signup') => void;
+  onAuthRequest: () => void;
+  onDashboardRequest: () => void;
   userRole: 'guest' | 'client' | 'admin';
   onLogout: () => void;
 }
 
-export const Navigation = ({ isMenuOpen, setIsMenuOpen, onAuthRequest, userRole, onLogout }: NavigationProps) => {
+export const Navigation = ({ isMenuOpen, setIsMenuOpen, onAuthRequest, onDashboardRequest, userRole, onLogout }: NavigationProps) => {
   return (
     <>
       <nav className="fixed w-full z-40 px-6 py-8 flex items-center justify-between mix-blend-difference text-white">
@@ -35,18 +36,26 @@ export const Navigation = ({ isMenuOpen, setIsMenuOpen, onAuthRequest, userRole,
           <div className="flex items-center gap-3">
             {userRole === 'guest' ? (
               <button
-                onClick={() => onAuthRequest('signin')}
-                className="text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
+                onClick={() => onAuthRequest()}
+                className="text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white cursor-pointer transition-colors"
               >
                 Admin
               </button>
             ) : (
-              <button
-                onClick={onLogout}
-                className="rounded-full border border-white/30 px-4 py-2 text-xs uppercase tracking-[0.3em] transition hover:border-luxury-gold"
-              >
-                Logout
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={onDashboardRequest}
+                  className="text-xs uppercase tracking-[0.3em] text-luxury-gold hover:text-white transition-colors cursor-pointer"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={onLogout}
+                  className="rounded-full border border-white/30 px-4 py-2 text-xs uppercase tracking-[0.3em] transition hover:border-luxury-gold"
+                >
+                  Logout
+                </button>
+              </div>
             )}
           </div>
         </div>

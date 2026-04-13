@@ -1,5 +1,6 @@
 import React from 'react';
-import { MapPin, Phone, Mail, Calendar, Clock } from 'lucide-react';
+import { MapPin, Phone, Mail, Calendar, Clock, Instagram, Facebook } from 'lucide-react';
+import { RiTiktokLine } from 'react-icons/ri';
 
 export const Footer = () => {
   return (
@@ -10,6 +11,20 @@ export const Footer = () => {
           <p className="text-luxury-ink/50 font-light max-w-sm leading-relaxed">
             Where beauty meets confidence.
           </p>
+        </div>
+        <div className="space-y-4">
+          <h4 className="text-[10px] uppercase tracking-[0.3em] font-semibold">Follow</h4>
+          <div className="flex flex-col gap-3 text-sm text-luxury-ink/70">
+            <a href="https://www.instagram.com/jv_eugenio?igsh=MWhsZzlqdnV6bDF4NQ%3D%3D&utm_source=qr" className="flex items-center gap-2 hover:text-luxury-gold transition-colors">
+              <Instagram size={16} /> @jv_eugenio
+            </a>
+            <a href="https://www.facebook.com/share/1Fw38PYQga/?mibextid=wwXIfr" className="flex items-center gap-2 hover:text-luxury-gold transition-colors">
+              <Facebook size={16} /> @Von Eugenio
+            </a>
+            <a href="https://www.tiktok.com/@jhon_jv_von?_r=1&_t=ZS-95IoqIEc1dl" className="flex items-center gap-2 hover:text-luxury-gold transition-colors">
+              <RiTiktokLine size={16} /> @jhon_jv_von
+            </a>
+          </div>
         </div>
         
         <div className="space-y-4">

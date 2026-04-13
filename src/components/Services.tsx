@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { UploadedImage } from '../types';
 import Service1 from '../assets/img/EventCat.png';
 import Service2 from '../assets/img/PageantCat.png';
 import Service3 from '../assets/img/PhotoShootCat.png';
@@ -40,7 +41,12 @@ const services = [
   }
 ];
 
-export const Services = () => {
+interface ServicesProps {
+  uploadedImages: UploadedImage[];
+  setSelectedImage: (img: string | null) => void;
+}
+
+export const Services = ({ uploadedImages, setSelectedImage }: ServicesProps) => {
   const [active, setActive] = useState(0);
   const [direction, setDirection] = useState(1);
   const touchStartX = useRef<number | null>(null);
@@ -68,6 +74,9 @@ export const Services = () => {
   };
 
   const s = services[active];
+  
+  // Filter uploaded images by the current service title
+  const filteredImages = uploadedImages.filter(img => img.category === s.title);
 
   return (
     <section
@@ -118,14 +127,11 @@ export const Services = () => {
 
               {/* Image — uses aspect ratio so full photo always shows */}
               <div className="relative w-full rounded-2xl overflow-hidden bg-[#f0ebe4]">
-                {/* aspect-[3/4] gives portrait ratio typical for makeup photos */}
                 <div className="aspect-[3/4] w-full">
                   <img
                     src={s.image}
                     alt={s.alt}
-                    className="w-full h-full object-cover
-                    
-                    "
+                    className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />
                 </div>
@@ -165,6 +171,25 @@ export const Services = () => {
                 >
                   {s.description}
                 </motion.p>
+                
+                {/* Recent Work Gallery (Mobile) */}
+                {filteredImages.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-[8px] uppercase tracking-[0.3em] text-luxury-gold mb-3">Recent Work</p>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                      {filteredImages.map((img) => (
+                        <div 
+                          key={img.id} 
+                          className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-luxury-ink/5 cursor-zoom-in"
+                          onClick={() => setSelectedImage(img.src)}
+                        >
+                          <img src={img.src} alt="Recent work" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <motion.div
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.42 }}
@@ -226,6 +251,25 @@ export const Services = () => {
                 >
                   {s.description}
                 </motion.p>
+
+                {/* Recent Work Gallery (Desktop) */}
+                {filteredImages.length > 0 && (
+                  <div className="mb-8">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-luxury-gold mb-4">Recent Work</p>
+                    <div className="grid grid-cols-4 gap-3">
+                      {filteredImages.slice(0, 4).map((img) => (
+                        <div 
+                          key={img.id} 
+                          className="aspect-square rounded-xl overflow-hidden border border-luxury-ink/5 group relative cursor-zoom-in"
+                          onClick={() => setSelectedImage(img.src)}
+                        >
+                          <img src={img.src} alt="Recent work" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" referrerPolicy="no-referrer" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <motion.div
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.46 }}
