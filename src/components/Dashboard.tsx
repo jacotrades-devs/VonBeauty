@@ -83,53 +83,53 @@ const AdminDashboard = ({
 
   return (
     <div className="space-y-16">
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+        <div className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
           <div className="flex items-center gap-3 text-luxury-gold mb-4">
             <Users size={20} />
-            <p className="uppercase tracking-[0.35em] text-xs text-luxury-ink/50">Clients consulted</p>
+            <p className="uppercase tracking-[0.35em] text-[10px] md:text-xs text-luxury-ink/50">Clients consulted</p>
           </div>
-          <p className="text-5xl font-serif">{totalClients}</p>
-          <p className="text-sm text-luxury-ink/60 mt-3">Distinct client emails in the current booking log.</p>
+          <p className="text-4xl md:text-5xl font-serif">{totalClients}</p>
+          <p className="text-xs md:text-sm text-luxury-ink/60 mt-3">Distinct client emails in the current booking log.</p>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
+        <div className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
           <div className="flex items-center gap-3 text-luxury-gold mb-4">
             <FileText size={20} />
-            <p className="uppercase tracking-[0.35em] text-xs text-luxury-ink/50">Total bookings</p>
+            <p className="uppercase tracking-[0.35em] text-[10px] md:text-xs text-luxury-ink/50">Total bookings</p>
           </div>
-          <p className="text-5xl font-serif">{bookings.length}</p>
-          <p className="text-sm text-luxury-ink/60 mt-3">Live booking records available for lookup and management.</p>
+          <p className="text-4xl md:text-5xl font-serif">{bookings.length}</p>
+          <p className="text-xs md:text-sm text-luxury-ink/60 mt-3">Live booking records available for lookup and management.</p>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
+        <div className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
           <div className="flex items-center gap-3 text-luxury-gold mb-4">
             <MessageSquare size={20} />
-            <p className="uppercase tracking-[0.35em] text-xs text-luxury-ink/50">Pending Reviews</p>
+            <p className="uppercase tracking-[0.35em] text-[10px] md:text-xs text-luxury-ink/50">Pending Reviews</p>
           </div>
-          <p className="text-5xl font-serif">{pendingTestimonials.length}</p>
-          <p className="text-sm text-luxury-ink/60 mt-3">Reviews awaiting approval before being published.</p>
+          <p className="text-4xl md:text-5xl font-serif">{pendingTestimonials.length}</p>
+          <p className="text-xs md:text-sm text-luxury-ink/60 mt-3">Reviews awaiting approval before being published.</p>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
-        <section className="rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
-          <div className="flex items-center justify-between gap-4 mb-8">
+        <section className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div className="flex gap-4">
               <button 
                 onClick={() => setActiveTab('bookings')}
-                className={`text-2xl font-serif transition-colors ${activeTab === 'bookings' ? 'text-luxury-ink' : 'text-luxury-ink/30 hover:text-luxury-ink/50'}`}
+                className={`text-xl md:text-2xl font-serif transition-colors ${activeTab === 'bookings' ? 'text-luxury-ink' : 'text-luxury-ink/30 hover:text-luxury-ink/50'}`}
               >
                 Bookings
               </button>
               <button 
                 onClick={() => setActiveTab('testimonials')}
-                className={`text-2xl font-serif transition-colors ${activeTab === 'testimonials' ? 'text-luxury-ink' : 'text-luxury-ink/30 hover:text-luxury-ink/50'}`}
+                className={`text-xl md:text-2xl font-serif transition-colors ${activeTab === 'testimonials' ? 'text-luxury-ink' : 'text-luxury-ink/30 hover:text-luxury-ink/50'}`}
               >
                 Testimonials
               </button>
             </div>
-            <div className="rounded-full bg-luxury-ink/5 px-4 py-2 text-xs uppercase tracking-[0.35em] text-luxury-ink">Management</div>
+            <div className="w-fit rounded-full bg-luxury-ink/5 px-4 py-2 text-[10px] md:text-xs uppercase tracking-[0.35em] text-luxury-ink">Management</div>
           </div>
 
           {activeTab === 'bookings' ? (
@@ -148,15 +148,15 @@ const AdminDashboard = ({
                 {filteredBookings.slice(0, 4).map((booking) => (
                   <div
                     key={booking.id}
-                    className={`w-full text-left rounded-3xl border px-5 py-4 transition flex items-center justify-between ${selectedBooking?.id === booking.id ? 'border-luxury-gold bg-luxury-gold/5' : 'border-luxury-ink/10 bg-white'}`}
+                    className={`w-full text-left rounded-3xl border px-4 md:px-5 py-4 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${selectedBooking?.id === booking.id ? 'border-luxury-gold bg-luxury-gold/5' : 'border-luxury-ink/10 bg-white'}`}
                   >
                     <button 
                       onClick={() => setSelectedBookingId(booking.id)}
                       className="flex-1 text-left"
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium">{booking.name}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                        <span className="font-medium text-sm md:text-base">{booking.name}</span>
+                        <span className={`text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                           booking.status === 'Confirmed' ? 'bg-green-50 text-green-600' :
                           booking.status === 'Pending' ? 'bg-amber-50 text-amber-600' :
                           'bg-red-50 text-red-600'
@@ -164,10 +164,10 @@ const AdminDashboard = ({
                           {booking.status}
                         </span>
                       </div>
-                      <p className="text-sm text-luxury-ink/60 mt-1">{booking.service} · {booking.date} at {booking.time}</p>
+                      <p className="text-xs md:text-sm text-luxury-ink/60 mt-1">{booking.service} · {booking.date} at {booking.time}</p>
                     </button>
                     
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-2 sm:ml-4">
                       {booking.status === 'Pending' && (
                         <button 
                           onClick={() => updateStatus(booking.id, 'Confirmed')}
@@ -235,7 +235,7 @@ const AdminDashboard = ({
           )}
         </section>
 
-        <section className="rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
+        <section className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
           <ImageUploadForm
             title="Import to Gallery"
             description="Add new looks to your public portfolio"
@@ -253,34 +253,34 @@ const ClientDashboard = ({ email, bookings }: { email: string | null, bookings: 
   const userBookings = bookings.filter(b => b.email === email);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 md:space-y-10">
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.35em] text-luxury-ink/50 mb-3">Welcome back</p>
-          <h3 className="text-3xl font-serif">{email ? `Hello, ${email.split('@')[0]}` : 'Hello there'}</h3>
-          <p className="mt-4 text-sm text-luxury-ink/60">Your client dashboard gives you a quick view of upcoming appointments, messages, and booking status.</p>
+        <div className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
+          <p className="text-[10px] md:text-xs uppercase tracking-[0.35em] text-luxury-ink/50 mb-3">Welcome back</p>
+          <h3 className="text-2xl md:text-3xl font-serif">{email ? `Hello, ${email.split('@')[0]}` : 'Hello there'}</h3>
+          <p className="mt-4 text-xs md:text-sm text-luxury-ink/60">Your client dashboard gives you a quick view of upcoming appointments, messages, and booking status.</p>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.35em] text-luxury-ink/50 mb-3">Next action</p>
-          <p className="text-xl font-serif">View your latest booking requests</p>
-          <p className="text-sm text-luxury-ink/60 mt-4">If you don’t see your event listed, book another consultation with the studio below.</p>
+        <div className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
+          <p className="text-[10px] md:text-xs uppercase tracking-[0.35em] text-luxury-ink/50 mb-3">Next action</p>
+          <p className="text-lg md:text-xl font-serif">View your latest booking requests</p>
+          <p className="text-xs md:text-sm text-luxury-ink/60 mt-4">If you don’t see your event listed, book another consultation with the studio below.</p>
           <button
             onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}
-            className="mt-6 luxury-button"
+            className="mt-6 luxury-button w-full sm:w-auto"
           >
             Book a new appointment
           </button>
         </div>
       </div>
 
-      <section className="rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
+      <section className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h4 className="text-2xl font-serif">Upcoming appointments</h4>
-            <p className="text-sm text-luxury-ink/60">Your next scheduled services at a glance.</p>
+            <h4 className="text-xl md:text-2xl font-serif">Upcoming appointments</h4>
+            <p className="text-xs md:text-sm text-luxury-ink/60">Your next scheduled services at a glance.</p>
           </div>
-          <span className="text-xs uppercase tracking-[0.35em] text-luxury-ink/50">{userBookings.length} items</span>
+          <span className="w-fit text-[10px] md:text-xs uppercase tracking-[0.35em] text-luxury-ink/50">{userBookings.length} items</span>
         </div>
 
         <div className="space-y-4">
@@ -318,7 +318,7 @@ export const Dashboard = ({ role, email, onBack, bookings, setBookings, testimon
         <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-luxury-ink/50">{role === 'admin' ? 'Admin portal' : 'Client dashboard'}</p>
-            <h1 className="text-5xl font-serif italic mt-4">{role === 'admin' ? 'Von Beauty Admin' : 'Your client space'}</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif italic mt-4">{role === 'admin' ? 'Von Beauty Admin' : 'Your client space'}</h1>
             <p className="mt-4 max-w-2xl text-sm text-luxury-ink/60">
               {role === 'admin'
                 ? 'Manage bookings, approve testimonials, and monitor client consultations from one place.'
@@ -346,13 +346,13 @@ export const Dashboard = ({ role, email, onBack, bookings, setBookings, testimon
           <ClientDashboard email={email} bookings={bookings} />
         )}
 
-        <div className="mt-16 rounded-[2rem] bg-white p-8 border border-luxury-ink/10 shadow-sm">
-          <div className="flex items-center justify-between">
+        <div className="mt-16 rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div>
-              <h4 className="text-xl font-serif">Need quick access?</h4>
-              <p className="text-sm text-luxury-ink/60 mt-2">Use the admin portal to review booking data, imports, and client counts in real time.</p>
+              <h4 className="text-lg md:text-xl font-serif">Need quick access?</h4>
+              <p className="text-xs md:text-sm text-luxury-ink/60 mt-2">Use the admin portal to review booking data, imports, and client counts in real time.</p>
             </div>
-            <button className="portfolio-button inline-flex items-center gap-2">
+            <button className="portfolio-button inline-flex items-center justify-center gap-2 w-full sm:w-auto">
               Open analytics <ChevronRight size={16} />
             </button>
           </div>
