@@ -1,59 +1,33 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, User } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Contact } from './components/Contact';
 import { Booking } from './components/Booking';
 import { Navigation } from './components/Navigation';
 import { Hero } from './components/Hero';
-import { AuthModal } from './components/AuthModal';
-import { Dashboard } from './components/Dashboard';
 import { About } from './components/About';
 import { Services } from './components/Services';
 import { Portfolio, FullGallery } from './components/Portfolio';
 import { Testimonials } from './components/Testimonials';
 import { Footer } from './components/Footer';
-import { UploadedImage, BookingData, Testimonial } from './types';
+import { AuthModal } from './components/AuthModal';
+import { Dashboard } from './components/Dashboard';
+import { UploadedImage, BookingData, Testimonial, UserRole } from './types';
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [userRole, setUserRole] = useState<'guest' | 'client' | 'admin'>('guest');
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<'home' | 'dashboard'>('home');
   const [selectedImage, setSelectedImage] = useState<{ src: string; category?: string } | null>(null);
-  
-  // Lifted state
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('guest');
+  const [adminEmail, setAdminEmail] = useState<string | null>(null);
+  const [secretTriggerCount, setSecretTriggerCount] = useState(0);
+  const secretResetRef = useRef<number | null>(null);
+
+  // Local state
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
-  const [bookings, setBookings] = useState<BookingData[]>([
-    {
-      id: 'BKG-001',
-      name: 'Ariella Stone',
-      email: 'ariella@example.com',
-      service: 'Bridal Makeup',
-      date: '2026-05-10',
-      time: '10:00',
-      status: 'Confirmed',
-    },
-    {
-      id: 'BKG-002',
-      name: 'Mila Hart',
-      email: 'mila@example.com',
-      service: 'Photoshoot Makeup',
-      date: '2026-05-15',
-      time: '14:30',
-      status: 'Pending',
-    },
-    {
-      id: 'BKG-003',
-      name: 'Noah Rae',
-      email: 'noah@example.com',
-      service: 'Event Makeup',
-      date: '2026-05-21',
-      time: '18:00',
-      status: 'Confirmed',
-    },
-  ]);
+  const [bookings, setBookings] = useState<BookingData[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([
     {
       id: 'T-001',
@@ -92,23 +66,9 @@ export default function App() {
       status: 'pending'
     }
   ]);
+  const [copied, setCopied] = useState(false);
 
   const isAuthenticated = userRole !== 'guest';
-
-  const handleAuthSubmit = (email: string) => {
-    setUserRole('admin');
-    setUserEmail(email);
-    setCurrentView('dashboard');
-    setIsAuthModalOpen(false);
-  };
-
-  const handleLogout = () => {
-    setUserRole('guest');
-    setUserEmail(null);
-    setCurrentView('home');
-  };
-
-  const [copied, setCopied] = useState(false);
 
   const handleShare = (src: string) => {
     navigator.clipboard.writeText(src);
@@ -116,23 +76,100 @@ export default function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="min-h-screen overflow-x-hidden selection:bg-luxury-gold selection:text-white">
-      {currentView !== 'dashboard' && (
+  const handleAdminSignIn = (email: string) => {
+    setUserRole('admin');
+    setAdminEmail(email);
+    setShowDashboard(true);
+    setIsAuthOpen(false);
+
+    if (typeof window !== 'undefined' && window.location.pathname === '/admin') {
+      window.history.replaceState({}, '', '/');
+    }
+  };
+
+  const handleDashboardRequest = () => {
+    setShowDashboard(true);
+  };
+
+  const handleLogout = () => {
+    setUserRole('guest');
+    setAdminEmail(null);
+    setShowDashboard(false);
+    setIsAuthOpen(false);
+    setSecretTriggerCount(0);
+    if (secretResetRef.current !== null) {
+      window.clearTimeout(secretResetRef.current);
+      secretResetRef.current = null;
+    }
+  };
+
+  const handleHiddenAdminTrigger = () => {
+    setSecretTriggerCount((prev) => {
+      const next = prev + 1;
+      if (next >= 5) {
+        setIsAuthOpen(true);
+        return 0;
+      }
+      return next;
+    });
+
+    if (secretResetRef.current !== null) {
+      window.clearTimeout(secretResetRef.current);
+    }
+    secretResetRef.current = window.setTimeout(() => {
+      setSecretTriggerCount(0);
+      secretResetRef.current = null;
+    }, 3000);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/admin') {
+      setIsAuthOpen(true);
+    }
+  }, []);
+
+  if (showDashboard) {
+    return (
+      <div className="min-h-screen overflow-x-hidden selection:bg-luxury-gold selection:text-white">
         <Navigation
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}
-          onAuthRequest={() => setIsAuthModalOpen(true)}
-          onDashboardRequest={() => setCurrentView('dashboard')}
+          onAuthRequest={() => setIsAuthOpen(true)}
+          onDashboardRequest={handleDashboardRequest}
           userRole={userRole}
           onLogout={handleLogout}
         />
-      )}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onSubmit={handleAuthSubmit}
+
+        <Dashboard
+          role={userRole}
+          email={adminEmail}
+          onBack={() => setShowDashboard(false)}
+          onLogout={handleLogout}
+          bookings={bookings}
+          setBookings={setBookings}
+          testimonials={testimonials}
+          setTestimonials={setTestimonials}
+          uploadedImages={uploadedImages}
+          setUploadedImages={setUploadedImages}
+        />
+
+        <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onSubmit={handleAdminSignIn} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen overflow-x-hidden selection:bg-luxury-gold selection:text-white">
+      <Navigation
+        isMenuOpen={isMenuOpen}
+        setIsMenuOpen={setIsMenuOpen}
+        onAuthRequest={() => setIsAuthOpen(true)}
+        onDashboardRequest={handleDashboardRequest}
+        userRole={userRole}
+        onLogout={handleLogout}
       />
+
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onSubmit={handleAdminSignIn} />
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
@@ -149,114 +186,42 @@ export default function App() {
             >
               <X size={32} />
             </button>
-            <a href="#home" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold focus:text-luxury-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/40">Home</a>
-            <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold focus:text-luxury-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/40">About</a>
-            <a href="#services" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold focus:text-luxury-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/40">Services</a>
-            <a href="#gallery" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold focus:text-luxury-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/40">Gallery</a>
-            <a href="#testimonials" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold focus:text-luxury-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/40">Reviews</a>
-            <a href="#booking" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold focus:text-luxury-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/40">Reserve</a>
-            <a href="#contact" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold focus:text-luxury-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/40">Contact</a>
-            {userRole === 'guest' ? (
-              <button
-                onClick={() => {
-                  setIsAuthModalOpen(true);
-                  setIsMenuOpen(false);
-                }}
-                className="flex items-center gap-3 text-white uppercase tracking-[0.3em] border border-white/20 rounded-full px-6 py-3 hover:border-luxury-gold transition-colors group"
-              >
-                <User size={18} className="text-luxury-gold group-hover:scale-110 transition-transform" />
-                Admin Login
-              </button>
-            ) : (
-              <div className="flex flex-col items-center gap-6">
-                <button
-                  onClick={() => {
-                    setCurrentView('dashboard');
-                    setIsMenuOpen(false);
-                  }}
-                  className="text-luxury-gold uppercase tracking-[0.3em] hover:text-white transition-colors"
-                >
-                  Go to Dashboard
-                </button>
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="text-white uppercase tracking-[0.3em] border border-white/20 rounded-full px-5 py-3 hover:border-luxury-gold transition-colors"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+            <a href="#home" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold">Home</a>
+            <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold">About</a>
+            <a href="#services" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold">Services</a>
+            <a href="#gallery" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold">Gallery</a>
+            <a href="#testimonials" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold">Reviews</a>
+            <a href="#booking" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold">Reserve</a>
+            <a href="#contact" onClick={() => setIsMenuOpen(false)} className="text-white transition-colors duration-200 hover:text-luxury-gold">Contact</a>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {currentView === 'dashboard' ? (
-        <Dashboard
-          role={userRole}
-          email={userEmail}
-          onBack={() => setCurrentView('home')}
-          onLogout={handleLogout}
-          bookings={bookings}
-          setBookings={setBookings}
-          testimonials={testimonials}
-          setTestimonials={setTestimonials}
-          uploadedImages={uploadedImages}
-          setUploadedImages={setUploadedImages}
-        />
-      ) : (
-        <>
-          <Hero />
-
-          {/* Featured In Section */}
-          {/* <section className="py-12 border-b border-luxury-ink/5 bg-white">
-            <div className="max-w-7xl mx-auto px-6">
-              <p className="text-[10px] uppercase tracking-[0.4em] text-center text-luxury-ink/40 mb-10">As Featured In</p>
-              <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24">
-                <span className="text-2xl md:text-3xl font-serif italic tracking-tighter opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500 cursor-default">VOGUE</span>
-                <span className="text-xl md:text-2xl font-serif font-bold tracking-[0.2em] opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500 cursor-default">BAZAAR</span>
-                <span className="text-2xl md:text-3xl font-serif uppercase tracking-widest opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500 cursor-default">Elle</span>
-                <span className="text-xl md:text-2xl font-serif italic opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500 cursor-default">Allure</span>
-                <span className="text-2xl md:text-3xl font-serif font-light tracking-tighter opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500 cursor-default">GLAMOUR</span>
-              </div>
-            </div>
-          </section> */}
-
-          <About />
-          {/* <Process /> */}
-          <Services 
-            uploadedImages={uploadedImages} 
-            setSelectedImage={setSelectedImage}
-          />
-          <Portfolio
-            setIsGalleryOpen={setIsGalleryOpen}
-            setSelectedImage={setSelectedImage}
-            isAuthenticated={isAuthenticated}
-            userRole={userRole}
-            uploadedImages={uploadedImages}
-          />
-          <Testimonials 
-            testimonials={testimonials} 
-            setTestimonials={setTestimonials} 
-          />
-          <Booking onBookingSubmit={(newBooking) => setBookings(prev => [...prev, newBooking])} />
-          <Contact />
-          <Footer />
-        </>
-      )}
+      <Hero />
+      <About />
+      <Services 
+        uploadedImages={uploadedImages} 
+        setSelectedImage={setSelectedImage}
+      />
+      <Portfolio
+        setIsGalleryOpen={setIsGalleryOpen}
+        setSelectedImage={setSelectedImage}
+        uploadedImages={uploadedImages} isAuthenticated={false} userRole={'guest'}      />
+      <Testimonials 
+        testimonials={testimonials}
+        setTestimonials={setTestimonials}
+      />
+      <Booking />
+      <Contact />
+      <Footer onHiddenAdminTrigger={handleHiddenAdminTrigger} />
 
       {/* Full Gallery Modal */}
       <FullGallery 
-        isOpen={isGalleryOpen} 
-        onClose={() => setIsGalleryOpen(false)} 
-        setSelectedImage={setSelectedImage} 
-        isAuthenticated={isAuthenticated}
-        userRole={userRole}
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        setSelectedImage={setSelectedImage}
         uploadedImages={uploadedImages}
-        setUploadedImages={setUploadedImages}
-      />
+        setUploadedImages={setUploadedImages} isAuthenticated={false} userRole={'guest'}      />
 
       {/* Lightbox Modal */}
       <AnimatePresence>
@@ -307,7 +272,7 @@ export default function App() {
                       setIsGalleryOpen(false);
                       document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="luxury-button !py-2 !px-6 text-[10px]"
+                    className="luxury-button py-2! px-6! text-[10px]"
                   >
                     Book This Look
                   </button>
@@ -316,7 +281,7 @@ export default function App() {
                       e.stopPropagation();
                       handleShare(selectedImage.src);
                     }}
-                    className="px-6 py-2 border border-white/20 rounded-full text-white text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all min-w-[100px]"
+                    className="px-6 py-2 border border-white/20 rounded-full text-white text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all min-w-25"
                   >
                     {copied ? 'Copied!' : 'Share'}
                   </button>

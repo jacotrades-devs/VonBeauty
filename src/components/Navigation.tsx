@@ -34,15 +34,7 @@ export const Navigation = ({ isMenuOpen, setIsMenuOpen, onAuthRequest, onDashboa
           </div>
 
           <div className="flex items-center gap-3">
-            {userRole === 'guest' ? (
-              <button
-                onClick={() => onAuthRequest()}
-                className="p-2 rounded-full border border-white/20 text-white/60 hover:text-luxury-gold hover:border-luxury-gold transition-all duration-300 cursor-pointer group"
-                title="Admin Login"
-              >
-                <User size={18} className="group-hover:scale-110 transition-transform" />
-              </button>
-            ) : (
+            {userRole !== 'guest' && (
               <div className="flex items-center gap-4">
                 <button
                   onClick={onDashboardRequest}

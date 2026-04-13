@@ -2,7 +2,11 @@ import React from 'react';
 import { MapPin, Phone, Mail, Calendar, Clock, Instagram, Facebook, ArrowUp } from 'lucide-react';
 import { RiTiktokLine } from 'react-icons/ri';
 
-export const Footer = () => {
+interface FooterProps {
+  onHiddenAdminTrigger: () => void;
+}
+
+export const Footer = ({ onHiddenAdminTrigger }: FooterProps) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -104,7 +108,7 @@ export const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-24 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="relative mt-24 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 text-[10px] uppercase tracking-[0.2em]">
             <p>&copy; 2026 Haus of Von Beauty. All Rights Reserved.</p>
             {/* <div className="flex gap-6">
@@ -122,6 +126,14 @@ export const Footer = () => {
               <ArrowUp size={12} />
             </div>
           </button>
+
+          <button
+            type="button"
+            onClick={onHiddenAdminTrigger}
+            className="absolute right-4 bottom-4 w-10 h-10 opacity-0"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
         </div>
       </div>
 
