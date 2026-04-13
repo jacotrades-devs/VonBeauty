@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X } from 'lucide-react';
+import { X, User } from 'lucide-react';
 import { Contact } from './components/Contact';
 import { Booking } from './components/Booking';
 import { Navigation } from './components/Navigation';
@@ -154,8 +154,9 @@ export default function App() {
                   setIsAuthModalOpen(true);
                   setIsMenuOpen(false);
                 }}
-                className="text-white uppercase tracking-[0.3em] border border-white/20 rounded-full px-5 py-3 hover:border-luxury-gold transition-colors"
+                className="flex items-center gap-3 text-white uppercase tracking-[0.3em] border border-white/20 rounded-full px-6 py-3 hover:border-luxury-gold transition-colors group"
               >
+                <User size={18} className="text-luxury-gold group-hover:scale-110 transition-transform" />
                 Admin Login
               </button>
             ) : (
@@ -189,6 +190,7 @@ export default function App() {
           role={userRole}
           email={userEmail}
           onBack={() => setCurrentView('home')}
+          onLogout={handleLogout}
           bookings={bookings}
           setBookings={setBookings}
           testimonials={testimonials}
