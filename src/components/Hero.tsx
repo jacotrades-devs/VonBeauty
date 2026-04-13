@@ -113,27 +113,27 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4, duration: 0.8 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-4 sm:pt-8"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-4 sm:pt-8 z-50"
           >
             <a 
               href="#booking" 
-              className="luxury-button group relative overflow-hidden inline-flex items-center justify-center w-full sm:w-auto sm:min-w-[220px] bg-luxury-gold text-luxury-ink border-luxury-gold hover:text-white"
+              className="luxury-button group relative overflow-hidden inline-flex items-center justify-center w-full sm:w-auto sm:min-w-[220px] bg-luxury-gold text-luxury-ink border-luxury-gold hover:text-white z-50 transition-all duration-300"
             >
               <span className="relative z-10">Book Your Transformation</span>
               <div className="absolute inset-0 bg-luxury-ink translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
             </a>
             <a 
-              href="#portfolio" 
-              className="luxury-button inline-flex items-center justify-center w-full sm:w-auto sm:min-w-[220px] backdrop-blur-sm bg-white/5 border-white/20 hover:bg-white/10"
+              href="#contact" 
+              className="luxury-button inline-flex items-center justify-center w-full sm:w-auto sm:min-w-[220px] backdrop-blur-sm bg-white/5 border-white/20 hover:bg-white/10 z-50 transition-all duration-300"
             >
-              View Portfolio
+              Contact Me
             </a>
           </motion.div>
         </motion.div>
       </div>
 
       {/* Trust Indicators / Stats */}
-      <div className="absolute bottom-24 left-0 w-full z-20 hidden md:block">
+      <div className="absolute bottom-24 left-0 w-full z-0 hidden md:block">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-end opacity-40">
           <div className="space-y-1">
             <p className="text-[10px] uppercase tracking-widest text-luxury-gold">Experience</p>
