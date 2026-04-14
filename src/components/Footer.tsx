@@ -10,7 +10,6 @@ export const Footer = ({ onHiddenAdminTrigger }: FooterProps) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
   return (
     <footer className="bg-luxury-ink text-white/60 py-24 px-6 relative overflow-hidden">
       {/* Decorative background element */}

@@ -64,7 +64,7 @@ export const Testimonials = ({ testimonials, setTestimonials }: TestimonialsProp
             {[...approvedTestimonials, ...approvedTestimonials].map((t, i) => (
               <div 
                 key={i}
-                className="w-[300px] sm:w-[400px] md:w-[450px] bg-luxury-cream/30 p-6 sm:p-10 rounded-3xl border border-luxury-ink/5 flex flex-col justify-between"
+                className="w-75 sm:w-100 md:w-112.5 bg-luxury-cream/30 p-6 sm:p-10 rounded-3xl border border-luxury-ink/5 flex flex-col justify-between"
               >
                 <div className="space-y-6 sm:space-y-8">
                   <div className="flex items-center gap-4">
