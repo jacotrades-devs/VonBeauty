@@ -175,10 +175,11 @@ export default function App() {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div 
-            initial={{ opacity: 0, y: -100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -100 }}
-            className="fixed inset-0 bg-luxury-ink z-45 flex flex-col items-center justify-center gap-8 text-white text-2xl font-serif italic"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.3 }}
+            className="fixed right-0 top-0 w-80 h-full bg-luxury-ink z-45 flex flex-col items-center justify-center gap-8 text-white text-xl font-serif italic px-8"
           >
             <button 
               onClick={() => setIsMenuOpen(false)}

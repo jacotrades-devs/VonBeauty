@@ -57,12 +57,12 @@
 
 ```json
 {
-  "telephone": "+63-935-853-0343, +63-966-731-6921, +63-994-786-0153",  // → Add your actual phone
+  "telephone": "+63-935-853-0343, +63-966-731-6921, +63-994-786-0153",
   "address": {
-    "streetAddress": "Roxas st.District 2",  // → Your business address
-    "addressLocality": "Cauayan City",          // → Your city
-    "addressRegion": "Cagayan Valley",           // → Your state
-    "postalCode": "3305"                 // → Your ZIP code
+    "streetAddress": "Roxas st.District 2", 
+    "addressLocality": "Cauayan City", 
+    "addressRegion": "Cagayan Valley", 
+    "postalCode": "3305"
   }
 }
 ```

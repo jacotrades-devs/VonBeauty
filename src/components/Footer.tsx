@@ -27,23 +27,53 @@ export const Footer = ({ onHiddenAdminTrigger }: FooterProps) => {
               </p>
             </div>
             
-            <div className="flex gap-4">
-              {[
-                { icon: <Instagram size={18} />, href: "https://www.instagram.com/jv_eugenio?igsh=MWhsZzlqdnV6bDF4NQ%3D%3D&utm_source=qr", label: "Instagram" },
-                { icon: <Facebook size={18} />, href: "https://www.facebook.com/share/1Fw38PYQga/?mibextid=wwXIfr", label: "Facebook" },
-                { icon: <RiTiktokLine size={18} />, href: "https://www.tiktok.com/@jhon_jv_von?_r=1&_t=ZS-95IoqIEc1dl", label: "TikTok" }
-              ].map((social, i) => (
-                <a 
-                  key={i}
-                  href={social.href} 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-luxury-gold hover:border-luxury-gold hover:text-luxury-ink transition-all duration-300"
-                  aria-label={social.label}
-                >
-                  {social.icon}
-                </a>
-              ))}
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <p className="text-luxury-gold text-[10px] uppercase tracking-[0.4em]">Hauz of Von Page</p>
+                <div className="flex gap-4">
+                  <a 
+                    href="https://www.instagram.com/haus_of_von_beauty?igsh=bjBuNmQxczNnNGRr&utm_source=qr&fbclid=IwY2xjawRZeMhleHRuA2FlbQIxMABicmlkETFkZlJ1UVdacmdmTXJaMUxCc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHgrURKzbA3-IjSH4tbnS3DyOl37-wbLadX3BAWQwrAO3fXaxCvGMdWNeCQ1L_aem_d7ecxro0EIcMoR9-8vne5g" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-luxury-gold hover:border-luxury-gold hover:text-luxury-ink transition-all duration-300"
+                    aria-label="Instagram"
+                  >
+                    <Instagram size={18} />
+                  </a>
+                  <a 
+                    href="https://www.facebook.com/profile.php?id=61569269276857" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-luxury-gold hover:border-luxury-gold hover:text-luxury-ink transition-all duration-300"
+                    aria-label="Facebook"
+                  >
+                    <Facebook size={18} />
+                  </a>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <p className="text-luxury-gold text-[10px] uppercase tracking-[0.4em]">Main Accounts</p>
+                <div className="flex gap-4">
+                  <a 
+                    href="https://www.facebook.com/share/1Fw38PYQga/?mibextid=wwXIfr" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-luxury-gold hover:border-luxury-gold hover:text-luxury-ink transition-all duration-300"
+                    aria-label="Facebook"
+                  >
+                    <Facebook size={18} />
+                  </a>
+                  <a 
+                    href="https://www.tiktok.com/@jhon_jv_von?_r=1&_t=ZS-95IoqIEc1dl" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-luxury-gold hover:border-luxury-gold hover:text-luxury-ink transition-all duration-300"
+                    aria-label="TikTok"
+                  >
+                    <RiTiktokLine size={18} />
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
