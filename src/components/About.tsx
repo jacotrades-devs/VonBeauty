@@ -42,16 +42,29 @@ export const About = () => {
         <p className="text-base sm:text-lg text-luxury-ink/70 leading-relaxed font-light">
           Hi, I'm Von, a passionate makeup artist who loves enhancing natural beauty while bringing out confidence in every client. I specialize in glam, soft glam, and event makeup for special occasions such as pageants, photoshoots, and celebrations. My goal is to make every client feel beautiful, confident, and camera-ready for their special moments.
         </p>
-        <div className="flex flex-wrap justify-center md:justify-start gap-y-4 gap-x-6 md:gap-8 pt-4">
-          <a href="https://www.instagram.com/jv_eugenio?igsh=MWhsZzlqdnV6bDF4NQ%3D%3D&utm_source=qr" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
-            <Instagram size={18} className="text-luxury-gold" /> @jv_eugenio
-          </a>
-          <a href="https://www.facebook.com/share/1Fw38PYQga/?mibextid=wwXIfr" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
-            <Facebook size={18} className="text-luxury-gold" /> @Von Eugenio
-          </a>
-          <a href="https://www.tiktok.com/@jhon_jv_von?_r=1&_t=ZS-95IoqIEc1dl" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap">
-            <RiTiktokLine size={18} className="text-luxury-gold" /> @jhon_jv_von
-          </a>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+          <div className="space-y-4">
+            <p className="text-luxury-gold text-[10px] tracking-[0.4em] uppercase">Hauz of Von Page</p>
+            <div className="flex flex-col gap-4">
+              <a href="https://www.instagram.com/haus_of_von_beauty?igsh=bjBuNmQxczNnNGRr&utm_source=qr&fbclid=IwY2xjawRZeMhleHRuA2FlbQIxMABicmlkETFkZlJ1UVdacmdmTXJaMUxCc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHgrURKzbA3-IjSH4tbnS3DyOl37-wbLadX3BAWQwrAO3fXaxCvGMdWNeCQ1L_aem_d7ecxro0EIcMoR9-8vne5g" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap" target="_blank" rel="noopener noreferrer">
+                <Instagram size={18} className="text-luxury-gold" /> @haus_of_von_beauty
+              </a>
+              <a href="https://www.facebook.com/profile.php?id=61569269276857" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap" target="_blank" rel="noopener noreferrer">
+                <Facebook size={18} className="text-luxury-gold" /> @Hauz of VON Beauty
+              </a>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <p className="text-luxury-gold text-[10px] tracking-[0.4em] uppercase">Main Accounts</p>
+            <div className="flex flex-col gap-4">
+              <a href="https://www.tiktok.com/@jhon_jv_von?_r=1&_t=ZS-95IoqIEc1dl" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap" target="_blank" rel="noopener noreferrer">
+                <RiTiktokLine size={18} className="text-luxury-gold" /> @jhon_jv_von
+              </a>
+              <a href="https://www.facebook.com/share/1Fw38PYQga/?mibextid=wwXIfr" className="group flex items-center gap-2 md:gap-3 text-[10px] md:text-xs tracking-widest uppercase hover:text-luxury-gold transition-colors whitespace-nowrap" target="_blank" rel="noopener noreferrer">
+                <Facebook size={18} className="text-luxury-gold" /> @Von Eugenio
+              </a>
+            </div>
+          </div>
         </div>
       </motion.div>
     </section>

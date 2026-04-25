@@ -117,10 +117,9 @@ export const Hero = () => {
           >
             <a 
               href="#booking" 
-              className="luxury-button group relative overflow-hidden inline-flex items-center justify-center w-full sm:w-auto sm:min-w-[220px] bg-luxury-gold text-luxury-ink border-luxury-gold hover:text-white z-50 transition-all duration-300"
+              className="luxury-button inline-flex items-center justify-center w-full sm:w-auto sm:min-w-[220px] bg-luxury-gold text-luxury-ink hover:bg-white hover:text-luxury-ink z-50 transition-all duration-300"
             >
-              <span className="relative z-10">Book Your Transformation</span>
-              <div className="absolute inset-0 bg-luxury-ink translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              Book Now
             </a>
             <a 
               href="#contact" 

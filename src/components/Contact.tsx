@@ -46,7 +46,7 @@ export const Contact = () => {
 
   return (
     <section id="contact" className="py-16 sm:py-24 lg:py-32 bg-luxury-ink text-white relative overflow-hidden">
-      <Toaster position="top-right" reverseOrder={false} /> {}
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="absolute top-0 right-0 w-full lg:w-1/2 h-full opacity-10 pointer-events-none">
         <img src={artistImg} className="w-full h-full object-cover" alt="Artist" />
       </div>
@@ -76,20 +76,24 @@ export const Contact = () => {
                   <p className="text-xs sm:text-sm font-light">eugeniojv31@gmail.com</p>
                 </div>
               </motion.a>
-
-              <div className="group flex items-start gap-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-luxury-gold group-hover:border-luxury-gold transition-all">
-                  <Phone size={18} className="group-hover:text-luxury-ink" />
-                </div>
-                <div>
-                  <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-white/40">Phone</p>
-                  <div className="space-y-1">
-                    <a href="tel:+09667316921" className="block text-xs sm:text-sm font-light hover:text-luxury-gold transition-colors">Globe +09667316921</a>
-                    <a href="tel:+09358530343" className="block text-xs sm:text-sm font-light hover:text-luxury-gold transition-colors">TM +09358530343</a>
-                    <a href="tel:+09947860153" className="block text-xs sm:text-sm font-light hover:text-luxury-gold transition-colors">DITO +09947860153</a>
+              <motion.a whileHover={{ x: 10 }}
+                href="mailto:eugeniojv31@gmail.com"
+                className="group flex items-center gap-4"
+              >
+                <div className="group flex items-start gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-luxury-gold group-hover:border-luxury-gold transition-all">
+                    <Phone size={18} className="group-hover:text-luxury-ink" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-white/40">Phone</p>
+                    <div className="space-y-1">
+                      <a href="tel:+09667316921" className="block text-xs sm:text-sm font-light hover:text-luxury-gold transition-colors">Globe +09667316921</a>
+                      <a href="tel:+09358530343" className="block text-xs sm:text-sm font-light hover:text-luxury-gold transition-colors">TM +09358530343</a>
+                      <a href="tel:+09947860153" className="block text-xs sm:text-sm font-light hover:text-luxury-gold transition-colors">DITO +09947860153</a>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </motion.a>
 
               {/* <motion.a 
                 whileHover={{ x: 10 }}
