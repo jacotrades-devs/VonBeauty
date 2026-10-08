@@ -203,7 +203,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess, onBackToSite 
                 d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.6-2.2-6.5-5.1L1.9 16c1.8 3.7 5.6 7 10.1 7z"
               />
             </svg>
-            Sign In with Google (ju27ine@gmail.com)
+            Sign In with Google
           </button>
 
           <p className="text-[10px] text-white/30 text-center mt-6 uppercase tracking-widest">
