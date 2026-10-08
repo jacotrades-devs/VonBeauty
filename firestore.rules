@@ -76,16 +76,16 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Gallery Collection
+    // Gallery Collection - Publicly viewable so visitors can see portfolio
     match /gallery/{imageId} {
-      allow read: if resource.data.isHidden == false || isAdmin();
-      allow write: if isAdmin();
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
 
-    // Categories Collection
+    // Categories Collection - Publicly viewable
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
   }
 }
