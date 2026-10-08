@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
@@ -9,8 +8,8 @@ import { Contact } from './components/Contact';
 import { Booking } from './components/Booking';
 import { Navigation } from './components/Navigation';
 import { Hero } from './components/Hero';
-import { AuthModal } from './components/AuthModal';
 import { Dashboard } from './components/Dashboard';
+import { AdminLogin } from './components/AdminLogin';
 import { About } from './components/About';
 import { Services } from './components/Services';
 import { Portfolio, FullGallery } from './components/Portfolio';
@@ -19,13 +18,16 @@ import { Footer } from './components/Footer';
 import { StudioSOPModal } from './components/StudioSOPModal';
 import { UploadedImage, BookingData, Testimonial, CategoryItem } from './types';
 
+const isAdminRoute = (path: string) => path === '/admin' || path.startsWith('/admin/');
+
 export default function App() {
   const { user, role, isAdmin, loading } = useFirebase();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSOPModalOpen, setIsSOPModalOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'home' | 'dashboard'>('home');
+  const [pathname, setPathname] = useState<string>(() => {
+    return typeof window !== 'undefined' ? window.location.pathname : '/';
+  });
   const [selectedImage, setSelectedImage] = useState<{ src: string; category?: string; gender?: string; title?: string } | null>(null);
   
   // Lifted state (synced with Firebase)
@@ -37,20 +39,39 @@ export default function App() {
   // Default core categories combined with dynamic admin categories
   const defaultCategories = ['Bridal Makeup', 'Event Makeup', 'Pageant Makeup', 'Photoshoot Makeup', 'Transformation'];
   const categories = useMemo(() => {
-    const customNames = customCategories.map(c => c.name);
-    return Array.from(new Set([...defaultCategories, ...customNames]));
+    const activeCustom = customCategories
+      .filter(c => c.isActive !== false && !c.disabled)
+      .map(c => c.name);
+    return Array.from(new Set([...defaultCategories, ...activeCustom]));
   }, [customCategories]);
 
-  // Simple routing for /admin
+  const navigateToHome = () => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', '/');
+    }
+    setPathname('/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Sync with browser back/forward buttons
   useEffect(() => {
-    if (window.location.pathname === '/admin') {
-      if (isAdmin) {
-        setCurrentView('dashboard');
-      } else {
-        setIsAuthModalOpen(true);
+    const handlePopState = () => {
+      setPathname(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Redirect unauthenticated visitors attempting protected sub-routes to /admin
+  useEffect(() => {
+    if (!loading && isAdminRoute(pathname) && (!user || !isAdmin)) {
+      if (pathname !== '/admin') {
+        window.history.replaceState(null, '', '/admin');
+        setPathname('/admin');
       }
     }
-  }, [isAdmin]);
+  }, [loading, pathname, user, isAdmin]);
 
   useEffect(() => {
     if (loading) return;
@@ -123,7 +144,10 @@ export default function App() {
 
   const handleLogout = async () => {
     await auth.signOut();
-    setCurrentView('home');
+    if (typeof window !== 'undefined' && window.location.pathname !== '/admin') {
+      window.history.replaceState(null, '', '/admin');
+    }
+    setPathname('/admin');
   };
 
   const [copied, setCopied] = useState(false);
@@ -134,24 +158,18 @@ export default function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const onAdminPath = isAdminRoute(pathname);
+
   return (
     <div className="min-h-screen overflow-x-hidden selection:bg-luxury-gold selection:text-white">
-      {currentView !== 'dashboard' && (
+      {/* Public Navigation - Completely independent from admin controls */}
+      {!onAdminPath && (
         <Navigation
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}
-          onAuthRequest={() => setIsAuthModalOpen(true)}
-          onDashboardRequest={() => setCurrentView('dashboard')}
-          userRole={role}
-          onLogout={handleLogout}
           onOpenSOP={() => setIsSOPModalOpen(true)}
         />
       )}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={() => setCurrentView('dashboard')}
-      />
 
       {/* Studio SOP Modal */}
       <StudioSOPModal
@@ -161,7 +179,7 @@ export default function App() {
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
-        {isMenuOpen && (
+        {!onAdminPath && isMenuOpen && (
           <motion.div 
             initial={{ opacity: 0, y: -100 }}
             animate={{ opacity: 1, y: 0 }}
@@ -171,6 +189,7 @@ export default function App() {
             <button 
               onClick={() => setIsMenuOpen(false)}
               className="absolute top-8 right-8 text-white hover:text-luxury-gold transition-colors"
+              aria-label="Close menu"
             >
               <X size={32} />
             </button>
@@ -191,47 +210,47 @@ export default function App() {
             <a href="#booking" onClick={() => setIsMenuOpen(false)} className="text-white hover:text-luxury-gold transition-colors">Reserve</a>
             <a href="#contact" onClick={() => setIsMenuOpen(false)} className="text-white hover:text-luxury-gold transition-colors">Contact</a>
 
-            {role !== 'guest' && (
-              <div className="flex flex-col items-center gap-4 pt-4 border-t border-white/10 w-48">
-                {isAdmin && (
-                  <button
-                    onClick={() => {
-                      setCurrentView('dashboard');
-                      setIsMenuOpen(false);
-                    }}
-                    className="text-luxury-gold uppercase tracking-[0.3em] hover:text-white transition-colors text-sm"
-                  >
-                    Go to Dashboard
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="text-white uppercase tracking-[0.3em] border border-white/20 rounded-full px-5 py-2 hover:border-luxury-gold transition-colors text-xs"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+            <div className="flex flex-col items-center gap-4 pt-4 border-t border-white/10 w-52">
+              <a
+                href="#booking"
+                onClick={() => setIsMenuOpen(false)}
+                className="px-6 py-2.5 rounded-full bg-luxury-gold text-luxury-ink font-semibold uppercase tracking-widest text-xs hover:bg-white transition-colors text-center w-full"
+              >
+                Reserve Look
+              </a>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {currentView === 'dashboard' ? (
-        <Dashboard
-          role={role}
-          email={user?.email || null}
-          onBack={() => setCurrentView('home')}
-          onLogout={handleLogout}
-          bookings={bookings}
-          testimonials={testimonials}
-          uploadedImages={uploadedImages}
-          categories={categories}
-          customCategories={customCategories}
-          onOpenSOP={() => setIsSOPModalOpen(true)}
-        />
+      {/* Admin Route View vs Public Website View */}
+      {onAdminPath ? (
+        loading ? (
+          <div className="min-h-screen bg-luxury-ink flex flex-col items-center justify-center text-white">
+            <div className="w-10 h-10 border-2 border-luxury-gold border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-xs uppercase tracking-[0.3em] text-white/50">Verifying Security Credentials...</p>
+          </div>
+        ) : !user || !isAdmin ? (
+          <AdminLogin
+            onSuccess={() => {
+              setPathname(window.location.pathname);
+            }}
+            onBackToSite={navigateToHome}
+          />
+        ) : (
+          <Dashboard
+            role="admin"
+            email={user?.email || null}
+            onBack={navigateToHome}
+            onLogout={handleLogout}
+            bookings={bookings}
+            testimonials={testimonials}
+            uploadedImages={uploadedImages}
+            categories={categories}
+            customCategories={customCategories}
+            onOpenSOP={() => setIsSOPModalOpen(true)}
+          />
+        )
       ) : (
         <>
           <Hero />
@@ -357,4 +376,3 @@ export default function App() {
     </div>
   );
 }
-

@@ -8,21 +8,29 @@ export interface CategoryItem {
   id: string;
   name: string;
   description?: string;
+  isActive?: boolean;
+  disabled?: boolean;
+  isCore?: boolean;
+  isProtected?: boolean;
   createdAt?: any;
+  updatedAt?: any;
 }
-
 
 export interface UploadedImage {
   id: string;
+  imageUrl?: string;
   src: string;
-  file?: File;
+  storagePath?: string;
+  categoryId?: string;
+  categoryName?: string;
   category: ServiceCategory;
-
-  gender?: GenderTag;
+  lookName?: string;
   title?: string;
+  demographic?: GenderTag;
+  gender?: GenderTag;
   isHidden?: boolean;
   createdAt?: any;
-
+  updatedAt?: any;
 }
 
 export interface BookingData {

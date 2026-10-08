@@ -1,14 +1,22 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { onAuthStateChanged, User, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { UserRole } from '../types';
+
+export const AUTHORIZED_ADMIN_EMAILS = [
+  'ju27ine@gmail.com',
+  'eugeniojv31@gmail.com',
+  'jacotradesdevs@gmail.com',
+  import.meta.env.VITE_ADMIN_EMAIL || '',
+].filter(Boolean).map(e => e.toLowerCase());
 
 interface FirebaseContextType {
   user: User | null;
   role: UserRole;
   loading: boolean;
   isAdmin: boolean;
+  setRole: (role: UserRole) => void;
 }
 
 const FirebaseContext = createContext<FirebaseContextType>({
@@ -16,6 +24,7 @@ const FirebaseContext = createContext<FirebaseContextType>({
   role: 'guest',
   loading: true,
   isAdmin: false,
+  setRole: () => {},
 });
 
 export const useFirebase = () => useContext(FirebaseContext);
@@ -23,43 +32,55 @@ export const useFirebase = () => useContext(FirebaseContext);
 export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole>('guest');
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    try {
+      setPersistence(auth, browserLocalPersistence).catch(() => {});
+    } catch {
+      // Non-fatal if browser environment handles storage natively
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      
-      if (currentUser) {
-        // Check if user exists in Firestore, if not create a client profile
-        const userDocRef = doc(db, 'users', currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
+      try {
+        setUser(currentUser);
         
-        if (!userDoc.exists()) {
-          const adminEmails = [import.meta.env.VITE_ADMIN_EMAIL || '', 'eugeniojv31@gmail.com', 'ju27ine@gmail.com', 'jacotradesdevs@gmail.com'].filter(Boolean);
-          const newRole: UserRole = currentUser.email && adminEmails.includes(currentUser.email) ? 'admin' : 'client';
-          await setDoc(userDocRef, {
-            email: currentUser.email,
-            displayName: currentUser.displayName,
-            role: newRole,
-            createdAt: serverTimestamp(),
-          });
-          setRole(newRole);
-        } else {
-          // If user exists, but is one of the recognized admins, ensure admin role
-          const adminEmails = [import.meta.env.VITE_ADMIN_EMAIL || '', 'eugeniojv31@gmail.com', 'ju27ine@gmail.com', 'jacotradesdevs@gmail.com'].filter(Boolean);
-          const currentDataRole = userDoc.data().role as UserRole;
-          if (currentUser.email && adminEmails.includes(currentUser.email) && currentDataRole !== 'admin') {
-            await setDoc(userDocRef, { role: 'admin' }, { merge: true });
+        if (currentUser && currentUser.email) {
+          const userEmail = currentUser.email.toLowerCase();
+          const isUserEmailAdmin = AUTHORIZED_ADMIN_EMAILS.includes(userEmail);
+
+          if (isUserEmailAdmin) {
             setRole('admin');
+            setIsAdmin(true);
           } else {
-            setRole(currentDataRole);
+            // Check Firestore user doc safely
+            try {
+              const userDocRef = doc(db, 'users', currentUser.uid);
+              const userDoc = await getDoc(userDocRef);
+              if (userDoc.exists() && userDoc.data()?.role === 'admin') {
+                setRole('admin');
+                setIsAdmin(true);
+              } else {
+                setRole('client');
+                setIsAdmin(false);
+              }
+            } catch {
+              setRole('client');
+              setIsAdmin(false);
+            }
           }
+        } else {
+          setRole('guest');
+          setIsAdmin(false);
         }
-      } else {
+      } catch (err) {
+        console.warn('Auth state error (handled):', err);
         setRole('guest');
+        setIsAdmin(false);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -69,12 +90,14 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     user,
     role,
     loading,
-    isAdmin: role === 'admin',
+    isAdmin,
+    setRole,
   };
 
   return (
     <FirebaseContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </FirebaseContext.Provider>
   );
 };
+

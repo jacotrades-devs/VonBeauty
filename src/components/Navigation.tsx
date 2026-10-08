@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'motion/react';
 import { Menu, X, User } from 'lucide-react';
@@ -6,14 +5,10 @@ import { Menu, X, User } from 'lucide-react';
 interface NavigationProps {
   isMenuOpen: boolean;
   setIsMenuOpen: (isOpen: boolean) => void;
-  onAuthRequest: () => void;
-  onDashboardRequest: () => void;
-  userRole: 'guest' | 'client' | 'admin';
-  onLogout: () => void;
   onOpenSOP?: () => void;
 }
 
-export const Navigation = ({ isMenuOpen, setIsMenuOpen, onAuthRequest, onDashboardRequest, userRole, onLogout, onOpenSOP }: NavigationProps) => {
+export const Navigation = ({ isMenuOpen, setIsMenuOpen, onOpenSOP }: NavigationProps) => {
   return (
     <>
       <nav className="fixed w-full z-40 px-6 py-8 flex items-center justify-between mix-blend-difference text-white">
@@ -44,22 +39,12 @@ export const Navigation = ({ isMenuOpen, setIsMenuOpen, onAuthRequest, onDashboa
           </div>
 
           <div className="flex items-center gap-3">
-            {userRole !== 'guest' && (
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={onDashboardRequest}
-                  className="text-xs uppercase tracking-[0.3em] text-luxury-gold hover:text-white transition-colors cursor-pointer"
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={onLogout}
-                  className="rounded-full border border-white/30 px-4 py-2 text-xs uppercase tracking-[0.3em] transition hover:border-luxury-gold"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+            <a
+              href="#booking"
+              className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-luxury-ink bg-luxury-gold hover:bg-white transition-colors cursor-pointer font-medium rounded-full px-5 py-2 shadow-sm"
+            >
+              Reserve Look
+            </a>
           </div>
         </div>
 

@@ -34,7 +34,7 @@ export const ImageUploadForm = ({
   const [lookTitle, setLookTitle] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
   const MAX_SIZE_MB = 10;
 
   const genderOptions: { value: GenderTag; label: string; desc: string }[] = [
@@ -53,35 +53,52 @@ export const ImageUploadForm = ({
 
     for (const file of fileArray) {
       if (!ACCEPTED_TYPES.includes(file.type)) {
-        setUploadError(`"${file.name}" is not a supported format.`);
+        setUploadError(`"${file.name}" is not a supported format. Please use JPG, PNG, or WebP.`);
         continue;
       }
       if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-        setUploadError(`"${file.name}" exceeds ${MAX_SIZE_MB}MB.`);
+        setUploadError(`"${file.name}" exceeds ${MAX_SIZE_MB}MB limit.`);
         continue;
       }
 
       try {
-        // 1. Upload to Firebase Storage
-        const storageRef = ref(storage, `gallery/${Date.now()}_${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
+        // 1. Upload to Firebase Storage with safe, unpredictable path
+        const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const uniqueId = Math.random().toString(36).substring(2, 10);
+        const storagePath = `gallery/${Date.now()}_${uniqueId}.${extension}`;
+        const storageRef = ref(storage, storagePath);
+        
+        const snapshot = await uploadBytes(storageRef, file, {
+          contentType: file.type,
+          customMetadata: {
+            category: selectedCategory,
+            demographic: selectedGender,
+          }
+        });
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        // 2. Save to Firestore with Gender Tag, Category, and optional Title
+        // 2. Save complete metadata to Firestore
         await addDoc(collection(db, 'gallery'), {
+          imageUrl: downloadURL,
           src: downloadURL,
+          storagePath: storagePath,
+          categoryId: selectedCategory,
+          categoryName: selectedCategory,
           category: selectedCategory,
-          gender: selectedGender,
+          lookName: lookTitle.trim() || `${selectedCategory} Showcase`,
           title: lookTitle.trim() || `${selectedCategory} Showcase`,
+          demographic: selectedGender,
+          gender: selectedGender,
           isHidden: false,
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
 
         successCount++;
       } catch (error) {
         console.error('Upload error:', error);
         handleFirestoreError(error, OperationType.WRITE, 'gallery');
-        setUploadError('Failed to upload some images. Please check permissions.');
+        setUploadError('Failed to upload image. Please verify administrator authorization.');
       }
     }
 

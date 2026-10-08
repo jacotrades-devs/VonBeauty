@@ -1,17 +1,19 @@
-import React, { useMemo, useState } from 'react';
-import { motion } from 'motion/react';
-import { 
+
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
   Search, Users, FileText, ArrowLeft, ChevronRight, 
   CheckCircle2, Clock, XCircle, Trash2, MessageSquare, 
   Star, Eye, EyeOff, LayoutDashboard, Calendar, 
-  Image as ImageIcon, Sparkles, LogOut, TrendingUp, Plus, ShieldCheck, Tag
+  Image as ImageIcon, Sparkles, LogOut, TrendingUp, Plus, ShieldCheck, Tag,
+  Pencil, Upload, X, Check, ToggleLeft, ToggleRight, RefreshCw
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
 import { doc, updateDoc, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { db, storage, handleFirestoreError, OperationType } from '../lib/firebase';
 import { BookingData, Testimonial, UploadedImage, CategoryItem, GenderTag } from '../types';
 import { ImageUploadForm } from './ImageUploadForm';
 
@@ -47,7 +49,34 @@ const AdminDashboard = ({
 }) => {
   const [search, setSearch] = useState('');
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'testimonials' | 'gallery' | 'categories'>('overview');
+  // Sub-route synchronization for /admin, /admin/dashboard, /admin/gallery, /admin/categories
+  const getInitialTab = (): 'overview' | 'bookings' | 'testimonials' | 'gallery' | 'categories' => {
+    if (typeof window === 'undefined') return 'overview';
+    const path = window.location.pathname;
+    if (path.includes('/admin/gallery')) return 'gallery';
+    if (path.includes('/admin/categories')) return 'categories';
+    if (path.includes('/admin/bookings')) return 'bookings';
+    if (path.includes('/admin/reviews') || path.includes('/admin/testimonials')) return 'testimonials';
+    return 'overview';
+  };
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'testimonials' | 'gallery' | 'categories'>(getInitialTab);
+
+  const handleTabChange = (tab: 'overview' | 'bookings' | 'testimonials' | 'gallery' | 'categories') => {
+    setActiveTab(tab);
+    const targetUrl = tab === 'overview' ? '/admin/dashboard' : `/admin/${tab}`;
+    if (typeof window !== 'undefined' && window.location.pathname !== targetUrl) {
+      window.history.pushState({ tab }, '', targetUrl);
+    }
+  };
+
+  useEffect(() => {
+    const handlePop = () => {
+      setActiveTab(getInitialTab());
+    };
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, []);
   
   // Gallery filter states in dashboard
   const [galleryGenderFilter, setGalleryGenderFilter] = useState<'All' | GenderTag>('All');
@@ -58,6 +87,23 @@ const AdminDashboard = ({
   const [newCatDesc, setNewCatDesc] = useState('');
   const [isAddingCat, setIsAddingCat] = useState(false);
   const [catMessage, setCatMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Edit Image Modal state
+  const [editingImage, setEditingImage] = useState<UploadedImage | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editGender, setEditGender] = useState<GenderTag>('Female');
+  const [editReplacementFile, setEditReplacementFile] = useState<File | null>(null);
+  const [editReplacementPreview, setEditReplacementPreview] = useState<string | null>(null);
+  const [isSavingImage, setIsSavingImage] = useState(false);
+  const [imageEditError, setImageEditError] = useState<string | null>(null);
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Edit Category Modal state
+  const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
+  const [editCatName, setEditCatName] = useState('');
+  const [editCatDesc, setEditCatDesc] = useState('');
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
 
   // Mock data for the chart based on bookings
   const chartData = useMemo(() => {
@@ -85,8 +131,6 @@ const AdminDashboard = ({
     [bookings]
   );
 
-  const selectedBooking = bookings.find((booking) => booking.id === selectedBookingId) || filteredBookings[0] || null;
-
   // Filtered gallery in admin
   const filteredGalleryImages = useMemo(() => {
     return uploadedImages.filter(img => {
@@ -96,13 +140,29 @@ const AdminDashboard = ({
     });
   }, [uploadedImages, galleryGenderFilter, galleryCatFilter]);
 
-  const removeUploaded = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this image permanently?')) {
+  // Recent 4 uploaded images for overview
+  const recentUploads = useMemo(() => {
+    return [...uploadedImages].slice(0, 4);
+  }, [uploadedImages]);
+
+  const removeUploaded = async (img: UploadedImage) => {
+    const title = img.lookName || img.title || 'this portfolio photo';
+    if (window.confirm(`Permanently delete "${title}"? This will delete the photo file from Firebase Storage and remove the record from Firestore.`)) {
       try {
-        await deleteDoc(doc(db, 'gallery', id));
+        // 1. Delete the corresponding Firebase Storage file if storagePath exists
+        if (img.storagePath) {
+          try {
+            await deleteObject(ref(storage, img.storagePath));
+          } catch (storageErr) {
+            console.warn('Storage file deletion notice:', storageErr);
+          }
+        }
+        // 2. Delete Firestore document
+        await deleteDoc(doc(db, 'gallery', img.id));
       } catch (error) {
-        console.error(error);
-        handleFirestoreError(error, OperationType.DELETE, `gallery/${id}`);
+        console.error('Delete error:', error);
+        handleFirestoreError(error, OperationType.DELETE, `gallery/${img.id}`);
+        alert('Failed to delete image. Please check administrator permissions.');
       }
     }
   };
@@ -113,6 +173,89 @@ const AdminDashboard = ({
     } catch (error) {
       console.error(error);
       handleFirestoreError(error, OperationType.UPDATE, `gallery/${id}`);
+    }
+  };
+
+  const openEditImage = (img: UploadedImage) => {
+    setEditingImage(img);
+    setEditTitle(img.lookName || img.title || '');
+    setEditCategory(img.category || categories[0]);
+    setEditGender((img.demographic || img.gender || 'Female') as GenderTag);
+    setEditReplacementFile(null);
+    setEditReplacementPreview(null);
+    setImageEditError(null);
+  };
+
+  const handleReplacementFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setEditReplacementFile(file);
+      const url = URL.createObjectURL(file);
+      setEditReplacementPreview(url);
+    }
+  };
+
+  const handleSaveImageChanges = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingImage) return;
+
+    setIsSavingImage(true);
+    setImageEditError(null);
+
+    try {
+      let finalSrc = editingImage.imageUrl || editingImage.src;
+      let finalStoragePath = editingImage.storagePath;
+
+      // If user replaced the photo file
+      if (editReplacementFile) {
+        const extension = editReplacementFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const uniqueId = Math.random().toString(36).substring(2, 10);
+        const newStoragePath = `gallery/${Date.now()}_${uniqueId}.${extension}`;
+        const newStorageRef = ref(storage, newStoragePath);
+        
+        const snapshot = await uploadBytes(newStorageRef, editReplacementFile, {
+          contentType: editReplacementFile.type,
+          customMetadata: {
+            category: editCategory,
+            demographic: editGender,
+          }
+        });
+        finalSrc = await getDownloadURL(snapshot.ref);
+
+        // Delete old storage file if existed
+        if (editingImage.storagePath) {
+          try {
+            await deleteObject(ref(storage, editingImage.storagePath));
+          } catch (e) {
+            console.warn('Old file cleanup notice:', e);
+          }
+        }
+        finalStoragePath = newStoragePath;
+      }
+
+      await updateDoc(doc(db, 'gallery', editingImage.id), {
+        imageUrl: finalSrc,
+        src: finalSrc,
+        storagePath: finalStoragePath || null,
+        lookName: editTitle.trim(),
+        title: editTitle.trim(),
+        categoryId: editCategory,
+        categoryName: editCategory,
+        category: editCategory,
+        demographic: editGender,
+        gender: editGender,
+        updatedAt: serverTimestamp()
+      });
+
+      setEditingImage(null);
+      setEditReplacementFile(null);
+      setEditReplacementPreview(null);
+    } catch (err: any) {
+      console.error('Error updating image:', err);
+      handleFirestoreError(err, OperationType.UPDATE, `gallery/${editingImage.id}`);
+      setImageEditError('Failed to update image details. Please verify administrator permissions.');
+    } finally {
+      setIsSavingImage(false);
     }
   };
 
@@ -166,7 +309,12 @@ const AdminDashboard = ({
       await addDoc(collection(db, 'categories'), {
         name: newCatName.trim(),
         description: newCatDesc.trim(),
-        createdAt: serverTimestamp()
+        isActive: true,
+        disabled: false,
+        isCore: false,
+        isProtected: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
       setCatMessage({ type: 'success', text: `Category "${newCatName.trim()}" added successfully!` });
       setNewCatName('');
@@ -177,6 +325,46 @@ const AdminDashboard = ({
       setCatMessage({ type: 'error', text: 'Failed to add category. Please check permissions.' });
     } finally {
       setIsAddingCat(false);
+    }
+  };
+
+  const handleToggleCategoryDisable = async (catId: string, currentDisabled?: boolean) => {
+    const nextDisabled = !currentDisabled;
+    try {
+      await updateDoc(doc(db, 'categories', catId), {
+        disabled: nextDisabled,
+        isActive: !nextDisabled,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error(err);
+      handleFirestoreError(err, OperationType.UPDATE, `categories/${catId}`);
+    }
+  };
+
+  const openEditCategory = (cat: CategoryItem) => {
+    setEditingCategory(cat);
+    setEditCatName(cat.name);
+    setEditCatDesc(cat.description || '');
+  };
+
+  const handleSaveCategoryEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory || !editCatName.trim()) return;
+
+    setIsSavingCategory(true);
+    try {
+      await updateDoc(doc(db, 'categories', editingCategory.id), {
+        name: editCatName.trim(),
+        description: editCatDesc.trim(),
+        updatedAt: serverTimestamp(),
+      });
+      setEditingCategory(null);
+    } catch (err) {
+      console.error(err);
+      handleFirestoreError(err, OperationType.UPDATE, `categories/${editingCategory.id}`);
+    } finally {
+      setIsSavingCategory(false);
     }
   };
 
@@ -197,35 +385,40 @@ const AdminDashboard = ({
       <aside className="lg:w-64 flex-shrink-0">
         <div className="sticky top-32 space-y-2">
           <button 
-            onClick={() => setActiveTab('overview')}
+            onClick={() => handleTabChange('overview')}
             className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all cursor-pointer ${activeTab === 'overview' ? 'bg-luxury-ink text-white shadow-lg' : 'text-luxury-ink/60 hover:bg-white hover:text-luxury-ink'}`}
           >
             <LayoutDashboard size={18} />
             <span className="text-sm font-medium">Overview</span>
           </button>
           <button 
-            onClick={() => setActiveTab('bookings')}
+            onClick={() => handleTabChange('bookings')}
             className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all cursor-pointer ${activeTab === 'bookings' ? 'bg-luxury-ink text-white shadow-lg' : 'text-luxury-ink/60 hover:bg-white hover:text-luxury-ink'}`}
           >
             <Calendar size={18} />
             <span className="text-sm font-medium">Bookings</span>
           </button>
           <button 
-            onClick={() => setActiveTab('testimonials')}
+            onClick={() => handleTabChange('testimonials')}
             className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all cursor-pointer ${activeTab === 'testimonials' ? 'bg-luxury-ink text-white shadow-lg' : 'text-luxury-ink/60 hover:bg-white hover:text-luxury-ink'}`}
           >
             <MessageSquare size={18} />
             <span className="text-sm font-medium">Reviews</span>
           </button>
           <button 
-            onClick={() => setActiveTab('gallery')}
-            className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all cursor-pointer ${activeTab === 'gallery' ? 'bg-luxury-ink text-white shadow-lg' : 'text-luxury-ink/60 hover:bg-white hover:text-luxury-ink'}`}
+            onClick={() => handleTabChange('gallery')}
+            className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl transition-all cursor-pointer ${activeTab === 'gallery' ? 'bg-luxury-ink text-white shadow-lg' : 'text-luxury-ink/60 hover:bg-white hover:text-luxury-ink'}`}
           >
-            <ImageIcon size={18} />
-            <span className="text-sm font-medium">Gallery & Upload</span>
+            <div className="flex items-center gap-3">
+              <ImageIcon size={18} />
+              <span className="text-sm font-medium">Gallery & Upload</span>
+            </div>
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-luxury-gold/20 text-luxury-gold font-bold tracking-wider uppercase">
+              + Add
+            </span>
           </button>
           <button 
-            onClick={() => setActiveTab('categories')}
+            onClick={() => handleTabChange('categories')}
             className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all cursor-pointer ${activeTab === 'categories' ? 'bg-luxury-ink text-white shadow-lg' : 'text-luxury-ink/60 hover:bg-white hover:text-luxury-ink'}`}
           >
             <Tag size={18} />
@@ -257,6 +450,31 @@ const AdminDashboard = ({
       <main className="flex-1 space-y-8">
         {activeTab === 'overview' && (
           <div className="space-y-8">
+            {/* Quick Action Banner */}
+            <div className="p-6 md:p-8 rounded-[2rem] bg-gradient-to-r from-luxury-ink to-luxury-ink/90 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+              <div>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-luxury-gold font-semibold">Quick Actions</span>
+                <h3 className="text-xl md:text-2xl font-serif italic mt-1">Ready to add new photos?</h3>
+                <p className="text-xs text-white/70 mt-1 max-w-xl">
+                  Upload high-resolution makeup looks, choose categories (Bridal, Event, etc.), and tag demographics (Female, Male, Gender-Inclusive).
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <button
+                  onClick={() => setActiveTab('gallery')}
+                  className="px-6 py-3.5 rounded-full bg-luxury-gold text-luxury-ink hover:bg-white transition-all text-xs uppercase tracking-widest font-semibold cursor-pointer shadow-md flex items-center gap-2"
+                >
+                  <Plus size={16} /> Upload New Photo
+                </button>
+                <button
+                  onClick={() => setActiveTab('categories')}
+                  className="px-5 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all text-xs uppercase tracking-widest font-medium cursor-pointer"
+                >
+                  + Add Category
+                </button>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
               <div className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm">
                 <div className="flex items-center gap-3 text-luxury-gold mb-4">
@@ -321,12 +539,28 @@ const AdminDashboard = ({
                 <h4 className="text-xl font-serif mb-6">Quick Overview</h4>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-luxury-cream/40 rounded-2xl border border-luxury-ink/5">
-                    <span className="text-xs uppercase tracking-wider text-luxury-ink/60">Portfolio Photos</span>
-                    <span className="font-serif text-lg font-bold text-luxury-ink">{uploadedImages.length}</span>
+                    <div>
+                      <span className="text-xs uppercase tracking-wider text-luxury-ink/60">Portfolio Photos</span>
+                      <span className="block font-serif text-lg font-bold text-luxury-ink">{uploadedImages.length}</span>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('gallery')}
+                      className="px-3 py-1.5 rounded-xl bg-luxury-ink text-white hover:bg-luxury-gold hover:text-luxury-ink text-[10px] uppercase tracking-wider font-semibold transition-all cursor-pointer"
+                    >
+                      + Upload
+                    </button>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-luxury-cream/40 rounded-2xl border border-luxury-ink/5">
-                    <span className="text-xs uppercase tracking-wider text-luxury-ink/60">Active Categories</span>
-                    <span className="font-serif text-lg font-bold text-luxury-ink">{categories.length}</span>
+                    <div>
+                      <span className="text-xs uppercase tracking-wider text-luxury-ink/60">Active Categories</span>
+                      <span className="block font-serif text-lg font-bold text-luxury-ink">{categories.length}</span>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('categories')}
+                      className="px-3 py-1.5 rounded-xl bg-luxury-ink/5 hover:bg-luxury-ink/10 text-luxury-ink text-[10px] uppercase tracking-wider font-medium transition-all cursor-pointer"
+                    >
+                      Manage
+                    </button>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-luxury-cream/40 rounded-2xl border border-luxury-ink/5">
                     <span className="text-xs uppercase tracking-wider text-luxury-ink/60">Customer Reviews</span>
@@ -335,6 +569,91 @@ const AdminDashboard = ({
                 </div>
               </section>
             </div>
+
+            {/* Recently Uploaded Images Section in Overview */}
+            <section className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xl font-serif">Recently Uploaded Portfolio Photos</h4>
+                  <p className="text-xs text-luxury-ink/40 mt-1">Latest makeup portfolio additions</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('gallery')}
+                  className="text-xs font-semibold uppercase tracking-wider text-luxury-gold hover:text-luxury-ink transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  View All Gallery ({uploadedImages.length}) <ChevronRight size={14} />
+                </button>
+              </div>
+
+              {recentUploads.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {recentUploads.map((img) => (
+                    <div key={img.id} className="relative group rounded-2xl overflow-hidden border border-luxury-ink/10 bg-luxury-cream/30 aspect-square shadow-xs">
+                      <img 
+                        src={img.src} 
+                        alt={img.title || "Gallery photo"} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      />
+                      <div className="absolute inset-0 bg-luxury-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => openEditImage(img)}
+                          className="p-2.5 bg-white text-luxury-ink rounded-full transition-all hover:scale-110 cursor-pointer shadow-md"
+                          title="Edit details / Replace"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                      </div>
+                      <div className="absolute top-2 left-2">
+                        <span className="bg-luxury-ink/80 backdrop-blur-md text-[8px] text-white uppercase tracking-widest px-2 py-0.5 rounded-md font-medium">
+                          {img.gender || 'Female'}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-md text-[8px] text-luxury-ink uppercase tracking-widest px-2 py-1 rounded-md truncate text-center font-semibold">
+                        {img.title || img.category}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-luxury-cream/30 rounded-2xl border border-dashed border-luxury-ink/15">
+                  <p className="text-xs text-luxury-ink/50 italic mb-3">No portfolio images uploaded yet.</p>
+                  <button
+                    onClick={() => setActiveTab('gallery')}
+                    className="px-5 py-2.5 rounded-full bg-luxury-gold text-luxury-ink text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-white transition-all shadow-sm"
+                  >
+                    + Upload First Photo
+                  </button>
+                </div>
+              )}
+            </section>
+
+            {/* Makeup Categories Quick Summary */}
+            <section className="rounded-[2rem] bg-white p-6 md:p-8 border border-luxury-ink/10 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xl font-serif">Makeup Services & Styles</h4>
+                  <p className="text-xs text-luxury-ink/40 mt-1">Core services and dynamic custom categories</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('categories')}
+                  className="text-xs font-semibold uppercase tracking-wider text-luxury-gold hover:text-luxury-ink transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  Manage Categories <ChevronRight size={14} />
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                {categories.map((catName) => (
+                  <span
+                    key={catName}
+                    className="px-3.5 py-1.5 rounded-full bg-luxury-cream/60 border border-luxury-ink/10 text-xs text-luxury-ink flex items-center gap-2"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-luxury-gold" />
+                    {catName}
+                  </span>
+                ))}
+              </div>
+            </section>
           </div>
         )}
 
@@ -550,20 +869,27 @@ const AdminDashboard = ({
                       />
                       
                       {/* Action Overlay */}
-                      <div className="absolute inset-0 bg-luxury-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                      <div className="absolute inset-0 bg-luxury-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2.5">
+                        <button
+                          onClick={() => openEditImage(img)}
+                          className="p-2.5 bg-white text-luxury-ink rounded-full transition-all hover:scale-110 cursor-pointer shadow-md"
+                          title="Edit look details or replace photo"
+                        >
+                          <Pencil size={15} />
+                        </button>
                         <button
                           onClick={() => toggleHideImage(img.id, !!img.isHidden)}
                           className="p-2.5 bg-white text-luxury-ink rounded-full transition-all hover:scale-110 cursor-pointer shadow-md"
                           title={img.isHidden ? "Show in public gallery" : "Hide from public gallery"}
                         >
-                          {img.isHidden ? <Eye size={16} /> : <EyeOff size={16} />}
+                          {img.isHidden ? <Eye size={15} /> : <EyeOff size={15} />}
                         </button>
                         <button
-                          onClick={() => removeUploaded(img.id)}
+                          onClick={() => removeUploaded(img)}
                           className="p-2.5 bg-red-500 text-white rounded-full transition-all hover:scale-110 cursor-pointer shadow-md"
                           title="Delete permanently"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
 
@@ -674,18 +1000,57 @@ const AdminDashboard = ({
 
                 {/* Custom Admin Categories */}
                 {customCategories.map(cat => (
-                  <div key={cat.id} className="p-4 rounded-2xl border border-luxury-gold/30 bg-luxury-gold/5 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm text-luxury-ink">{cat.name}</p>
-                      <p className="text-[10px] text-luxury-ink/50 truncate max-w-[160px]">{cat.description || 'Custom Category'}</p>
+                  <div 
+                    key={cat.id} 
+                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                      cat.disabled 
+                        ? 'border-luxury-ink/10 bg-luxury-cream/10 opacity-70' 
+                        : 'border-luxury-gold/30 bg-luxury-gold/5'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm text-luxury-ink truncate">{cat.name}</p>
+                        <span className={`text-[8px] uppercase tracking-wider px-2 py-0.5 rounded-full font-semibold shrink-0 ${
+                          cat.disabled 
+                            ? 'bg-gray-200 text-gray-600' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {cat.disabled ? 'Disabled' : 'Active'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-luxury-ink/50 truncate mt-0.5">
+                        {cat.description || 'Custom Category'}
+                      </p>
                     </div>
-                    <button
-                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
-                      title="Delete category"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleToggleCategoryDisable(cat.id, cat.disabled)}
+                        className={`p-2 rounded-full transition-colors cursor-pointer ${
+                          cat.disabled 
+                            ? 'text-gray-400 hover:text-green-600 hover:bg-green-50' 
+                            : 'text-green-600 hover:text-gray-400 hover:bg-gray-100'
+                        }`}
+                        title={cat.disabled ? "Enable category for public booking & gallery" : "Disable category"}
+                      >
+                        {cat.disabled ? <ToggleLeft size={18} /> : <ToggleRight size={18} />}
+                      </button>
+                      <button
+                        onClick={() => openEditCategory(cat)}
+                        className="p-2 text-luxury-ink/60 hover:text-luxury-gold hover:bg-luxury-gold/10 rounded-full transition-colors cursor-pointer"
+                        title="Edit category name & description"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
+                        title="Delete category"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -693,6 +1058,250 @@ const AdminDashboard = ({
           </div>
         )}
       </main>
+
+      {/* Edit Image Modal */}
+      <AnimatePresence>
+        {editingImage && (
+          <div className="fixed inset-0 z-120 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isSavingImage && setEditingImage(null)}
+              className="absolute inset-0 bg-luxury-ink/80 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-luxury-ink/10 overflow-hidden z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-luxury-ink/10">
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest text-luxury-gold font-semibold">Media Management</span>
+                  <h3 className="text-xl font-serif italic text-luxury-ink">Edit Portfolio Photo</h3>
+                </div>
+                <button
+                  onClick={() => !isSavingImage && setEditingImage(null)}
+                  disabled={isSavingImage}
+                  className="p-2 rounded-full hover:bg-luxury-cream text-luxury-ink/40 hover:text-luxury-ink transition-colors cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveImageChanges} className="mt-6 space-y-5">
+                {/* Image Preview & Replace */}
+                <div className="flex items-center gap-4 p-3 bg-luxury-cream/40 rounded-2xl border border-luxury-ink/5">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-luxury-ink/10 shrink-0 border border-luxury-ink/10 relative">
+                    <img
+                      src={editReplacementPreview || editingImage.src}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    {editReplacementPreview && (
+                      <span className="absolute top-1 right-1 bg-green-500 text-white text-[7px] px-1 py-0.5 rounded font-bold uppercase">
+                        New
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-xs font-medium text-luxury-ink">Replace Photo File</p>
+                    <p className="text-[10px] text-luxury-ink/40">Select a new image file to replace this look</p>
+                    <button
+                      type="button"
+                      onClick={() => replaceFileInputRef.current?.click()}
+                      className="mt-1 px-3 py-1.5 rounded-lg border border-luxury-gold text-luxury-gold text-[10px] uppercase tracking-wider font-semibold hover:bg-luxury-gold hover:text-luxury-ink transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Upload size={12} /> Choose New Photo
+                    </button>
+                    <input
+                      ref={replaceFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleReplacementFileChange}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+
+                {/* Look Name / Client Description */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-luxury-gold mb-1.5 font-semibold">
+                    Look Name / Client Description
+                  </label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="e.g. Royal Bridal Glam, Sunset Runway"
+                    className="w-full bg-luxury-cream/40 border border-luxury-ink/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-gold/30 text-luxury-ink"
+                  />
+                </div>
+
+                {/* Makeup Category */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-luxury-gold mb-1.5 font-semibold">
+                    Makeup Category / Service Style *
+                  </label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full bg-luxury-cream/40 border border-luxury-ink/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-gold/30 text-luxury-ink"
+                  >
+                    {categories.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Target Demographic / Gender */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-luxury-gold mb-1.5 font-semibold">
+                    Target Demographic / Gender
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['Female', 'Male', 'Gender-Inclusive'] as GenderTag[]).map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setEditGender(g)}
+                        className={`py-2 px-3 rounded-xl text-xs font-medium border text-center transition-all cursor-pointer ${
+                          editGender === g
+                            ? 'border-luxury-gold bg-luxury-gold/15 text-luxury-ink font-semibold'
+                            : 'border-luxury-ink/10 bg-luxury-cream/30 text-luxury-ink/60 hover:border-luxury-gold/40'
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {imageEditError && (
+                  <p className="text-xs text-red-500 bg-red-50 p-2.5 rounded-xl border border-red-100">{imageEditError}</p>
+                )}
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-luxury-ink/10">
+                  <button
+                    type="button"
+                    onClick={() => setEditingImage(null)}
+                    disabled={isSavingImage}
+                    className="px-5 py-2.5 rounded-full border border-luxury-ink/20 text-luxury-ink text-xs uppercase tracking-wider font-medium hover:bg-luxury-cream cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingImage}
+                    className="px-6 py-2.5 rounded-full bg-luxury-ink text-white hover:bg-luxury-gold hover:text-luxury-ink text-xs uppercase tracking-wider font-semibold shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSavingImage ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Category Modal */}
+      <AnimatePresence>
+        {editingCategory && (
+          <div className="fixed inset-0 z-120 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isSavingCategory && setEditingCategory(null)}
+              className="absolute inset-0 bg-luxury-ink/80 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-luxury-ink/10 z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-luxury-ink/10">
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest text-luxury-gold font-semibold">Service Management</span>
+                  <h3 className="text-xl font-serif italic text-luxury-ink">Edit Category</h3>
+                </div>
+                <button
+                  onClick={() => !isSavingCategory && setEditingCategory(null)}
+                  disabled={isSavingCategory}
+                  className="p-2 rounded-full hover:bg-luxury-cream text-luxury-ink/40 hover:text-luxury-ink transition-colors cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveCategoryEdit} className="mt-6 space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-luxury-gold mb-1.5 font-semibold">
+                    Category Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editCatName}
+                    onChange={(e) => setEditCatName(e.target.value)}
+                    placeholder="e.g. Airbrush Bridal"
+                    className="w-full bg-luxury-cream/40 border border-luxury-ink/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-gold/30 text-luxury-ink"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-luxury-gold mb-1.5 font-semibold">
+                    Brief Description (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={editCatDesc}
+                    onChange={(e) => setEditCatDesc(e.target.value)}
+                    placeholder="e.g. High-definition flawless airbrush application"
+                    className="w-full bg-luxury-cream/40 border border-luxury-ink/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-gold/30 text-luxury-ink"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-luxury-ink/10">
+                  <button
+                    type="button"
+                    onClick={() => setEditingCategory(null)}
+                    disabled={isSavingCategory}
+                    className="px-5 py-2.5 rounded-full border border-luxury-ink/20 text-luxury-ink text-xs uppercase tracking-wider font-medium hover:bg-luxury-cream cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingCategory}
+                    className="px-6 py-2.5 rounded-full bg-luxury-ink text-white hover:bg-luxury-gold hover:text-luxury-ink text-xs uppercase tracking-wider font-semibold shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSavingCategory ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" /> Updating...
+                      </>
+                    ) : (
+                      'Update Category'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

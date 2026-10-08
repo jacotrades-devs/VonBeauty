@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin, Phone, Mail, Calendar, Clock, Instagram, Facebook, ArrowUp } from 'lucide-react';
 import { RiTiktokLine } from 'react-icons/ri';

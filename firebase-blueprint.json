@@ -37,9 +37,15 @@
       "type": "object",
       "properties": {
         "src": { "type": "string", "description": "Image URL" },
+        "imageUrl": { "type": "string", "description": "Image download URL" },
+        "storagePath": { "type": "string", "description": "Firebase Storage path" },
         "category": { "type": "string", "description": "Image category" },
+        "categoryId": { "type": "string", "description": "Category identifier" },
+        "categoryName": { "type": "string", "description": "Category display name" },
         "gender": { "type": "string", "enum": ["Female", "Male", "Gender-Inclusive"], "description": "Target gender or demographic" },
+        "demographic": { "type": "string", "enum": ["Female", "Male", "Gender-Inclusive"], "description": "Target demographic" },
         "title": { "type": "string", "description": "Image title or look name" },
+        "lookName": { "type": "string", "description": "Specific makeup look name" },
         "isHidden": { "type": "boolean", "description": "Whether the image is hidden from gallery" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Upload timestamp" }
       },
@@ -47,11 +53,14 @@
     },
     "Category": {
       "title": "Category",
-      "description": "Custom makeup style or service category",
+      "description": "Makeup style or service category",
       "type": "object",
       "properties": {
         "name": { "type": "string", "description": "Category name" },
         "description": { "type": "string", "description": "Category description" },
+        "isActive": { "type": "boolean", "description": "Whether the category is active in public dropdowns and filters" },
+        "isCore": { "type": "boolean", "description": "Whether this is a core protected service" },
+        "isProtected": { "type": "boolean", "description": "Whether this category is protected from deletion" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
       },
       "required": ["name"]
@@ -91,3 +100,4 @@
     }
   }
 }
+ 
