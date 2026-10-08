@@ -16,6 +16,8 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { db, storage, handleFirestoreError, OperationType } from '../lib/firebase';
 import { BookingData, Testimonial, UploadedImage, CategoryItem, GenderTag } from '../types';
 import { ImageUploadForm } from './ImageUploadForm';
+import { compressImageToDataUrl } from '../lib/imageUtils';
+
 interface DashboardProps {
   role: 'admin' | 'client' | 'guest';
   email: string | null;
@@ -207,29 +209,36 @@ const AdminDashboard = ({
 
       // If user replaced the photo file
       if (editReplacementFile) {
-        const extension = editReplacementFile.name.split('.').pop()?.toLowerCase() || 'jpg';
-        const uniqueId = Math.random().toString(36).substring(2, 10);
-        const newStoragePath = `gallery/${Date.now()}_${uniqueId}.${extension}`;
-        const newStorageRef = ref(storage, newStoragePath);
-        
-        const snapshot = await uploadBytes(newStorageRef, editReplacementFile, {
-          contentType: editReplacementFile.type,
-          customMetadata: {
-            category: editCategory,
-            demographic: editGender,
-          }
-        });
-        finalSrc = await getDownloadURL(snapshot.ref);
+        try {
+          const extension = editReplacementFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+          const uniqueId = Math.random().toString(36).substring(2, 10);
+          const newStoragePath = `gallery/${Date.now()}_${uniqueId}.${extension}`;
+          const newStorageRef = ref(storage, newStoragePath);
+          
+          const snapshot = await uploadBytes(newStorageRef, editReplacementFile, {
+            contentType: editReplacementFile.type,
+            customMetadata: {
+              category: editCategory,
+              demographic: editGender,
+            }
+          });
+          finalSrc = await getDownloadURL(snapshot.ref);
 
-        // Delete old storage file if existed
-        if (editingImage.storagePath) {
-          try {
-            await deleteObject(ref(storage, editingImage.storagePath));
-          } catch (e) {
-            console.warn('Old file cleanup notice:', e);
+          // Delete old storage file if existed
+          if (editingImage.storagePath) {
+            try {
+              await deleteObject(ref(storage, editingImage.storagePath));
+            } catch (e) {
+              console.warn('Old file cleanup notice:', e);
+            }
           }
+          finalStoragePath = newStoragePath;
+        } catch (storageErr) {
+          console.warn('Storage upload fallback to compressed direct storage:', storageErr);
+          const compressed = await compressImageToDataUrl(editReplacementFile, 1400, 1400, 0.82);
+          finalSrc = compressed.dataUrl;
+          finalStoragePath = null;
         }
-        finalStoragePath = newStoragePath;
       }
 
       await updateDoc(doc(db, 'gallery', editingImage.id), {
