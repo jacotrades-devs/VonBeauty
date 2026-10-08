@@ -77,17 +77,35 @@ export default function App() {
     if (loading) return;
 
     // --- Firebase Real-time Sync ---
-    // 1. Sync Gallery
-    const galleryQuery = isAdmin 
-      ? query(collection(db, 'gallery'), orderBy('createdAt', 'desc'))
-      : query(collection(db, 'gallery'), where('isHidden', '==', false), orderBy('createdAt', 'desc'));
-    
-    const unsubscribeGallery = onSnapshot(galleryQuery, (snapshot) => {
-      const images = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UploadedImage));
-      setUploadedImages(images);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'gallery');
-    });
+    // 1. Sync Gallery (query collection directly; client handles isHidden filter)
+    let unsubscribeGallery = () => {};
+    const galleryCol = collection(db, 'gallery');
+    try {
+      const galleryQuery = query(galleryCol, orderBy('createdAt', 'desc'));
+      unsubscribeGallery = onSnapshot(galleryQuery, (snapshot) => {
+        const images = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UploadedImage));
+        setUploadedImages(images);
+      }, (error) => {
+        // Fallback without orderBy in case index or field is missing
+        console.warn('Gallery ordered query fallback to unordered:', error);
+        unsubscribeGallery = onSnapshot(galleryCol, (snapshot) => {
+          const images = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UploadedImage));
+          images.sort((a, b) => {
+            const tA = (a.createdAt as any)?.seconds || 0;
+            const tB = (b.createdAt as any)?.seconds || 0;
+            return tB - tA;
+          });
+          setUploadedImages(images);
+        }, (err2) => {
+          handleFirestoreError(err2, OperationType.LIST, 'gallery');
+        });
+      });
+    } catch {
+      unsubscribeGallery = onSnapshot(galleryCol, (snapshot) => {
+        const images = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UploadedImage));
+        setUploadedImages(images);
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'gallery'));
+    }
 
     // 2. Sync Bookings
     let unsubscribeBookings = () => {};
@@ -124,13 +142,28 @@ export default function App() {
     });
 
     // 4. Sync Custom Categories
-    const categoriesQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
-    const unsubscribeCategories = onSnapshot(categoriesQuery, (snapshot) => {
-      const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CategoryItem));
-      setCustomCategories(cats);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'categories');
-    });
+    let unsubscribeCategories = () => {};
+    const categoriesCol = collection(db, 'categories');
+    try {
+      const categoriesQuery = query(categoriesCol, orderBy('createdAt', 'desc'));
+      unsubscribeCategories = onSnapshot(categoriesQuery, (snapshot) => {
+        const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CategoryItem));
+        setCustomCategories(cats);
+      }, (error) => {
+        console.warn('Categories ordered query fallback to unordered:', error);
+        unsubscribeCategories = onSnapshot(categoriesCol, (snapshot) => {
+          const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CategoryItem));
+          setCustomCategories(cats);
+        }, (err2) => {
+          handleFirestoreError(err2, OperationType.LIST, 'categories');
+        });
+      });
+    } catch {
+      unsubscribeCategories = onSnapshot(categoriesCol, (snapshot) => {
+        const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CategoryItem));
+        setCustomCategories(cats);
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'categories'));
+    }
 
     return () => {
       unsubscribeGallery();
