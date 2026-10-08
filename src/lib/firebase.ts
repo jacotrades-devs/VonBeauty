@@ -4,16 +4,21 @@ import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseAppletConfig from '../../firebase-applet-config.json';
 
-const isCustomProject = Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID);
+export const isCustomProject = Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID);
 
-const firebaseConfig = {
+const rawDatabaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID;
+const databaseId = rawDatabaseId 
+  ? rawDatabaseId 
+  : (isCustomProject ? undefined : firebaseAppletConfig.firestoreDatabaseId);
+
+export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
   appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || (isCustomProject ? undefined : firebaseAppletConfig.firestoreDatabaseId),
+  firestoreDatabaseId: databaseId,
 };
 
 const app = initializeApp(firebaseConfig);
@@ -25,23 +30,23 @@ export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestore
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
-async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('not found') || error.message.includes('(default)')) {
-        console.warn(
-          `[Firebase Notice] Firestore database not yet created in project "${firebaseConfig.projectId}". ` +
-          `Go to Firebase Console (https://console.firebase.google.com) > Build > Firestore Database > click "Create database" to enable database storage.`
-        );
-      } else if (error.message.includes('the client is offline')) {
-        console.warn('Firebase is offline. Please verify network connectivity and Firebase configuration.');
-      }
-    }
+export let isDatabaseMissing = false;
+const dbListeners = new Set<(missing: boolean) => void>();
+
+export function subscribeDatabaseStatus(listener: (missing: boolean) => void) {
+  dbListeners.add(listener);
+  listener(isDatabaseMissing);
+  return () => {
+    dbListeners.delete(listener);
+  };
+}
+
+function markDatabaseMissing() {
+  if (!isDatabaseMissing) {
+    isDatabaseMissing = true;
+    dbListeners.forEach((l) => l(true));
   }
 }
-testConnection();
 
 export enum OperationType {
   CREATE = 'create',
@@ -75,7 +80,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   const errMsg = error instanceof Error ? error.message : String(error);
   
   // Gracefully handle database not created yet in Firebase Console
-  if (errMsg.includes('(default)') || errMsg.includes('not found')) {
+  if (errMsg.includes('(default)') || errMsg.includes('not found') || errMsg.includes('Database')) {
+    markDatabaseMissing();
     console.warn(`[Firestore Notice] Database not yet created on project "${firebaseConfig.projectId}". Create database in Firebase Console to enable persistent live sync.`);
     return;
   }
