@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { doc, updateDoc, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage, handleFirestoreError, OperationType, firebaseConfig, subscribeDatabaseStatus } from '../lib/firebase';
+import { db, storage, handleFirestoreError, OperationType, firebaseConfig, subscribeDatabaseStatus, subscribePermissionStatus } from '../lib/firebase';
 import { BookingData, Testimonial, UploadedImage, CategoryItem, GenderTag } from '../types';
 import { ImageUploadForm } from './ImageUploadForm';
 import { compressImageToDataUrl } from '../lib/imageUtils';
@@ -85,6 +85,45 @@ const AdminDashboard = ({
       setDatabaseMissing(missing);
     });
   }, []);
+
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [copiedRules, setCopiedRules] = useState(false);
+  useEffect(() => {
+    return subscribePermissionStatus((denied) => {
+      setPermissionDenied(denied);
+    });
+  }, []);
+
+  const FIRESTORE_RULES_SNIPPET = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /gallery/{imageId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /bookings/{bookingId} {
+      allow read, update, delete: if request.auth != null;
+      allow create: if true;
+    }
+    match /testimonials/{testimonialId} {
+      allow read, create: if true;
+      allow update, delete: if request.auth != null;
+    }
+    match /users/{userId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}`;
+
+  const copyFirestoreRules = () => {
+    navigator.clipboard.writeText(FIRESTORE_RULES_SNIPPET);
+    setCopiedRules(true);
+    setTimeout(() => setCopiedRules(false), 3000);
+  };
   
   // Gallery filter states in dashboard
   const [galleryGenderFilter, setGalleryGenderFilter] = useState<'All' | GenderTag>('All');
@@ -475,6 +514,48 @@ const AdminDashboard = ({
                     <li>Click <strong>"Create database"</strong> &gt; Keep Database ID as <strong>(default)</strong> &gt; Click <strong>Next</strong>.</li>
                     <li>Select a location (e.g. <em>asia-southeast1</em> or <em>asia-east1</em>) &gt; Click <strong>Create</strong>.</li>
                   </ol>
+                </div>
+              </div>
+            )}
+
+            {/* Security Rules Permission Warning Notice */}
+            {permissionDenied && (
+              <div className="p-6 md:p-8 rounded-[2rem] bg-rose-50 border-2 border-rose-200/80 shadow-md space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="p-2.5 rounded-2xl bg-rose-100 text-rose-800 shrink-0">
+                      <ShieldCheck size={22} />
+                    </span>
+                    <div>
+                      <h4 className="font-serif italic text-lg text-rose-950">Update Firebase Security Rules</h4>
+                      <p className="text-xs text-rose-800">
+                        Nakaharang ang default rules sa Firebase Console kaya hindi lumalabas ang mga photos sa website.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={copyFirestoreRules}
+                      className="px-4 py-2 rounded-xl bg-rose-900 text-white hover:bg-rose-800 text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors shadow-xs inline-flex items-center gap-1.5"
+                    >
+                      {copiedRules ? <Check size={14} /> : <FileText size={14} />}
+                      {copiedRules ? 'Copied Rules!' : 'Copy Rules Snippet'}
+                    </button>
+                    <a
+                      href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/rules`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 rounded-xl bg-white border border-rose-300 text-rose-900 hover:bg-rose-100/50 text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors inline-flex items-center gap-1.5"
+                    >
+                      Open Rules Tab &rarr;
+                    </a>
+                  </div>
+                </div>
+                <p className="text-xs text-rose-900 leading-relaxed font-light">
+                  Kapag bagong gawa ang Firestore, naka-set ito sa default deny (walang makakabasa ng gallery at categories). Para lumabas ang mga in-upload mong photos sa website, i-paste ang rules sa Firebase Console:
+                </p>
+                <div className="bg-white/90 p-4 rounded-2xl border border-rose-200 text-xs space-y-2 text-rose-950 font-mono text-[11px] overflow-x-auto">
+                  <pre>{FIRESTORE_RULES_SNIPPET}</pre>
                 </div>
               </div>
             )}
