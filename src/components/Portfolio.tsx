@@ -36,10 +36,10 @@ export const Portfolio = ({
   const staticPortfolio: { src: string; category: string; gender: GenderTag; title: string }[] = [
     { src: image1, category: 'Event Makeup', gender: 'Female', title: 'High Glam Event' },
     { src: image2, category: 'Pageant Makeup', gender: 'Female', title: 'Coronation Pageant' },
-    { src: image3, category: 'Photoshoot Makeup', gender: 'Gender-Inclusive', title: 'High-Fashion Editorial' },
+    { src: image3, category: 'Photoshoot Makeup', gender: 'Female', title: 'High-Fashion Editorial' },
     { src: image4, category: 'Bridal Makeup', gender: 'Female', title: 'Classic Radiant Bride' },
-    { src: image5, category: 'Event Makeup', gender: 'Male', title: 'Groom & Executive Prep' },
-    { src: image6, category: 'Transformation', gender: 'Gender-Inclusive', title: 'Sculpted Glamour' }
+    { src: image5, category: 'Event Makeup', gender: 'Female', title: 'Groom & Executive Prep' },
+    { src: image6, category: 'Transformation', gender: 'Female', title: 'Sculpted Glamour' }
   ];
 
   const visibleUploaded = uploadedImages.filter(img => !img.isHidden);
