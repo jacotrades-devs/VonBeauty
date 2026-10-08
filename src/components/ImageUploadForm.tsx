@@ -82,7 +82,12 @@ export const ImageUploadForm = ({
     } catch (err: any) {
       console.error('URL add error:', err);
       handleFirestoreError(err, OperationType.WRITE, 'gallery');
-      setUploadError('Failed to add image. Please check your admin permissions.');
+      const msg = err?.message || '';
+      if (msg.includes('not found') || msg.includes('(default)')) {
+        setUploadError('Firestore database not created yet in Firebase project. Please click "Create database" in Firebase Console first.');
+      } else {
+        setUploadError('Failed to add image. Please check your admin permissions.');
+      }
     } finally {
       setUploading(false);
     }
@@ -117,32 +122,6 @@ export const ImageUploadForm = ({
         let finalStoragePath: string | null = null;
         let storageSuccess = false;
 
-        // Only attempt Firebase Storage if explicitly enabled or requested
-        const useFirebaseStorage = false; // Bypass Firebase Storage to avoid Blaze billing & CORS errors
-        if (useFirebaseStorage) {
-          try {
-            const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-            const uniqueId = Math.random().toString(36).substring(2, 10);
-            const storagePath = `gallery/${Date.now()}_${uniqueId}.${extension}`;
-            const storageRef = ref(storage, storagePath);
-            
-            const snapshot = await uploadBytes(storageRef, file, {
-              contentType: file.type,
-              customMetadata: {
-                category: selectedCategory,
-                demographic: selectedGender,
-              }
-            });
-            finalImageUrl = await getDownloadURL(snapshot.ref);
-            finalStoragePath = storagePath;
-            storageSuccess = true;
-          } catch (storageErr) {
-            console.warn('Firebase Storage bypassed; using direct free storage:', storageErr);
-            finalImageUrl = compressed.dataUrl;
-            finalStoragePath = null;
-          }
-        }
-
         // Save complete metadata & image record to Firestore
         const lookName = lookTitle.trim() || `${selectedCategory} Showcase`;
         await addDoc(collection(db, 'gallery'), {
@@ -157,16 +136,21 @@ export const ImageUploadForm = ({
           demographic: selectedGender,
           gender: selectedGender,
           isHidden: false,
-          isDirectFreeStorage: !storageSuccess,
+          isDirectFreeStorage: true,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
 
         successCount++;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Upload error:', error);
         handleFirestoreError(error, OperationType.WRITE, 'gallery');
-        setUploadError('Failed to process image. Please verify administrator authorization.');
+        const msg = error?.message || '';
+        if (msg.includes('not found') || msg.includes('(default)')) {
+          setUploadError('Firestore database not created yet in Firebase project. Go to Firebase Console > Firestore Database > click "Create database" (100% Free).');
+        } else {
+          setUploadError('Failed to process image. Please verify administrator authorization.');
+        }
       }
     }
 
