@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, X, Sparkles, Users } from 'lucide-react';
@@ -36,10 +35,10 @@ export const Portfolio = ({
   const staticPortfolio: { src: string; category: string; gender: GenderTag; title: string }[] = [
     { src: image1, category: 'Event Makeup', gender: 'Female', title: 'High Glam Event' },
     { src: image2, category: 'Pageant Makeup', gender: 'Female', title: 'Coronation Pageant' },
-    { src: image3, category: 'Photoshoot Makeup', gender: 'Female', title: 'High-Fashion Editorial' },
+    { src: image3, category: 'Photoshoot Makeup', gender: 'Gender-Inclusive', title: 'High-Fashion Editorial' },
     { src: image4, category: 'Bridal Makeup', gender: 'Female', title: 'Classic Radiant Bride' },
-    { src: image5, category: 'Event Makeup', gender: 'Female', title: 'Groom & Executive Prep' },
-    { src: image6, category: 'Transformation', gender: 'Female', title: 'Sculpted Glamour' }
+    { src: image5, category: 'Event Makeup', gender: 'Male', title: 'Groom & Executive Prep' },
+    { src: image6, category: 'Transformation', gender: 'Gender-Inclusive', title: 'Sculpted Glamour' }
   ];
 
   const visibleUploaded = uploadedImages.filter(img => !img.isHidden);
@@ -61,7 +60,8 @@ export const Portfolio = ({
   });
 
   return (
-    <section id="gallery" className="py-24 px-6 max-w-7xl mx-auto">
+    <section id="portfolio" className="py-24 px-6 max-w-7xl mx-auto scroll-mt-20 relative">
+      <div id="gallery" className="absolute -top-24 left-0 pointer-events-none" />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-luxury-gold text-xs uppercase tracking-[0.3em] font-medium">
