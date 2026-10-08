@@ -48,6 +48,24 @@ function markDatabaseMissing() {
   }
 }
 
+export let isPermissionDenied = false;
+const permListeners = new Set<(denied: boolean) => void>();
+
+export function subscribePermissionStatus(listener: (denied: boolean) => void) {
+  permListeners.add(listener);
+  listener(isPermissionDenied);
+  return () => {
+    permListeners.delete(listener);
+  };
+}
+
+export function markPermissionDenied() {
+  if (!isPermissionDenied) {
+    isPermissionDenied = true;
+    permListeners.forEach((l) => l(true));
+  }
+}
+
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -84,6 +102,11 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     markDatabaseMissing();
     console.warn(`[Firestore Notice] Database not yet created on project "${firebaseConfig.projectId}". Create database in Firebase Console to enable persistent live sync.`);
     return;
+  }
+
+  // Gracefully handle permission denied rules in Firebase Console
+  if (errMsg.toLowerCase().includes('permission') || errMsg.toLowerCase().includes('insufficient')) {
+    markPermissionDenied();
   }
 
   const errInfo: FirestoreErrorInfo = {
