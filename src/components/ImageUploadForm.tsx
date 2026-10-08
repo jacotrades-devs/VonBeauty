@@ -110,36 +110,37 @@ export const ImageUploadForm = ({
       }
 
       try {
-        let finalImageUrl: string = '';
+        // 1. Direct Free Database Storage (Default - 100% Free, No Credit Card, Zero CORS)
+        // Compresses image client-side to optimized WebP/JPEG (typically 50-150KB)
+        const compressed = await compressImageToDataUrl(file, 1280, 1280, 0.80);
+        let finalImageUrl: string = compressed.dataUrl;
         let finalStoragePath: string | null = null;
-
-        // Compress the image locally first for optimal size & quality
-        const compressed = await compressImageToDataUrl(file, 1400, 1400, 0.82);
-
-        // Attempt Firebase Storage upload if configured
         let storageSuccess = false;
-        try {
-          const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-          const uniqueId = Math.random().toString(36).substring(2, 10);
-          const storagePath = `gallery/${Date.now()}_${uniqueId}.${extension}`;
-          const storageRef = ref(storage, storagePath);
-          
-          const snapshot = await uploadBytes(storageRef, file, {
-            contentType: file.type,
-            customMetadata: {
-              category: selectedCategory,
-              demographic: selectedGender,
-            }
-          });
-          finalImageUrl = await getDownloadURL(snapshot.ref);
-          finalStoragePath = storagePath;
-          storageSuccess = true;
-        } catch (storageErr) {
-          // If Firebase Storage fails (e.g. requires Blaze plan, CORS restriction, or bucket not set up),
-          // fallback gracefully to storing high-quality compressed image directly in Firestore!
-          console.warn('Firebase Storage not available or requires Blaze. Using direct database storage:', storageErr);
-          finalImageUrl = compressed.dataUrl;
-          finalStoragePath = null;
+
+        // Only attempt Firebase Storage if explicitly enabled or requested
+        const useFirebaseStorage = false; // Bypass Firebase Storage to avoid Blaze billing & CORS errors
+        if (useFirebaseStorage) {
+          try {
+            const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+            const uniqueId = Math.random().toString(36).substring(2, 10);
+            const storagePath = `gallery/${Date.now()}_${uniqueId}.${extension}`;
+            const storageRef = ref(storage, storagePath);
+            
+            const snapshot = await uploadBytes(storageRef, file, {
+              contentType: file.type,
+              customMetadata: {
+                category: selectedCategory,
+                demographic: selectedGender,
+              }
+            });
+            finalImageUrl = await getDownloadURL(snapshot.ref);
+            finalStoragePath = storagePath;
+            storageSuccess = true;
+          } catch (storageErr) {
+            console.warn('Firebase Storage bypassed; using direct free storage:', storageErr);
+            finalImageUrl = compressed.dataUrl;
+            finalStoragePath = null;
+          }
         }
 
         // Save complete metadata & image record to Firestore
