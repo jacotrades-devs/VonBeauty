@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { doc, updateDoc, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, storage, handleFirestoreError, OperationType, firebaseConfig, subscribeDatabaseStatus } from '../lib/firebase';
 import { BookingData, Testimonial, UploadedImage, CategoryItem, GenderTag } from '../types';
 import { ImageUploadForm } from './ImageUploadForm';
 import { compressImageToDataUrl } from '../lib/imageUtils';
@@ -77,6 +77,13 @@ const AdminDashboard = ({
     };
     window.addEventListener('popstate', handlePop);
     return () => window.removeEventListener('popstate', handlePop);
+  }, []);
+
+  const [databaseMissing, setDatabaseMissing] = useState(false);
+  useEffect(() => {
+    return subscribeDatabaseStatus((missing) => {
+      setDatabaseMissing(missing);
+    });
   }, []);
   
   // Gallery filter states in dashboard
@@ -432,6 +439,46 @@ const AdminDashboard = ({
       <main className="flex-1 space-y-8">
         {activeTab === 'overview' && (
           <div className="space-y-8">
+            {/* Database Setup Notice if Firestore not yet created in console */}
+            {databaseMissing && (
+              <div className="p-6 md:p-8 rounded-[2rem] bg-amber-50 border border-amber-300/80 text-amber-950 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-200/80 flex items-center justify-center text-amber-900 font-bold text-base shrink-0">
+                      ⚡
+                    </div>
+                    <div>
+                      <h4 className="font-serif italic text-lg sm:text-xl text-amber-950 font-bold">
+                        Firestore Database Setup Required
+                      </h4>
+                      <p className="text-xs text-amber-800">
+                        Firebase Project: <code className="bg-amber-200/60 px-2 py-0.5 rounded font-mono font-bold text-amber-950">{firebaseConfig.projectId}</code>
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 rounded-xl bg-amber-900 text-white hover:bg-amber-800 text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors shadow-xs inline-flex items-center gap-2 self-start sm:self-auto"
+                  >
+                    Open Firebase Console &rarr;
+                  </a>
+                </div>
+                <p className="text-xs text-amber-900 leading-relaxed font-light">
+                  Firebase requires you to click <strong>"Create database"</strong> once in the Firebase Console before documents can be saved. This is <strong>100% Free</strong> on the Firebase Spark tier (no Blaze plan or credit card required).
+                </p>
+                <div className="bg-white/90 p-4 rounded-2xl border border-amber-200 text-xs space-y-2 text-amber-950">
+                  <p className="font-semibold text-amber-950">Quick 3-Step Setup (takes 30 seconds):</p>
+                  <ol className="list-decimal list-inside space-y-1 text-amber-900 font-light">
+                    <li>Click <strong>Open Firebase Console</strong> above.</li>
+                    <li>Click <strong>"Create database"</strong> &gt; Keep Database ID as <strong>(default)</strong> &gt; Click <strong>Next</strong>.</li>
+                    <li>Select a location (e.g. <em>asia-southeast1</em> or <em>asia-east1</em>) &gt; Click <strong>Create</strong>.</li>
+                  </ol>
+                </div>
+              </div>
+            )}
+
             {/* Quick Action Banner */}
             <div className="p-6 md:p-8 rounded-[2rem] bg-gradient-to-r from-luxury-ink to-luxury-ink/90 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
               <div>
