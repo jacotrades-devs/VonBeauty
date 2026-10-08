@@ -570,11 +570,11 @@ const AdminDashboard = ({
               {recentUploads.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {recentUploads.map((img) => (
-                    <div key={img.id} className="relative group rounded-2xl overflow-hidden border border-luxury-ink/10 bg-luxury-cream/30 aspect-square shadow-xs">
+                    <div key={img.id} className="relative group rounded-2xl overflow-hidden border border-luxury-ink/10 bg-luxury-cream/30 aspect-[3/4] shadow-xs">
                       <img 
                         src={img.src} 
                         alt={img.title || "Gallery photo"} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105" 
                       />
                       <div className="absolute inset-0 bg-luxury-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <button
@@ -843,11 +843,11 @@ const AdminDashboard = ({
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {filteredGalleryImages.length > 0 ? (
                   filteredGalleryImages.map((img) => (
-                    <div key={img.id} className="relative group rounded-2xl overflow-hidden border border-luxury-ink/10 bg-luxury-cream/30 aspect-square shadow-xs">
+                    <div key={img.id} className="relative group rounded-2xl overflow-hidden border border-luxury-ink/10 bg-luxury-cream/30 aspect-[3/4] shadow-xs">
                       <img 
                         src={img.src} 
                         alt={img.title || "Gallery"} 
-                        className={`w-full h-full object-cover transition-opacity duration-300 ${img.isHidden ? 'opacity-40 grayscale' : 'opacity-100'}`} 
+                        className={`w-full h-full object-cover object-center transition-opacity duration-300 ${img.isHidden ? 'opacity-40 grayscale' : 'opacity-100'}`} 
                       />
                       
                       {/* Action Overlay */}
