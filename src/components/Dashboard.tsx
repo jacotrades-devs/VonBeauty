@@ -1,6 +1,6 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { 
   Search, Users, FileText, ArrowLeft, ChevronRight, 
   CheckCircle2, Clock, XCircle, Trash2, MessageSquare, 
   Star, Eye, EyeOff, LayoutDashboard, Calendar, 
@@ -16,7 +16,6 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { db, storage, handleFirestoreError, OperationType } from '../lib/firebase';
 import { BookingData, Testimonial, UploadedImage, CategoryItem, GenderTag } from '../types';
 import { ImageUploadForm } from './ImageUploadForm';
-
 interface DashboardProps {
   role: 'admin' | 'client' | 'guest';
   email: string | null;
