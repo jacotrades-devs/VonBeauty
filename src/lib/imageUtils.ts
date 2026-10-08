@@ -1,7 +1,6 @@
 /**
  * Utility to compress images in browser memory using HTML5 Canvas.
- * Allows storing portfolio photos directly in Firestore without needing Firebase Storage
- * or requiring a paid/Blaze billing account with a credit card.
+ * Strictly preserves the exact original aspect ratio so images never stretch or distort.
  */
 
 export interface CompressedImageResult {
@@ -13,9 +12,9 @@ export interface CompressedImageResult {
 
 export const compressImageToDataUrl = (
   file: File,
-  maxWidth = 1280,
-  maxHeight = 1280,
-  quality = 0.8
+  maxWidth = 1440,
+  maxHeight = 1440,
+  quality = 0.82
 ): Promise<CompressedImageResult> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -24,33 +23,37 @@ export const compressImageToDataUrl = (
       const img = new Image();
       img.onerror = () => reject(new Error('Failed to load image for compression'));
       img.onload = () => {
-        let width = img.width;
-        let height = img.height;
+        const originalWidth = img.naturalWidth || img.width;
+        const originalHeight = img.naturalHeight || img.height;
 
-        // Calculate aspect-ratio preserved downscaling
-        if (width > maxWidth || height > maxHeight) {
-          if (width / height > maxWidth / maxHeight) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          } else {
-            width = Math.round((width * maxHeight) / height);
-            maxHeight = height;
-          }
+        if (originalWidth === 0 || originalHeight === 0) {
+          reject(new Error('Invalid image dimensions'));
+          return;
+        }
+
+        // Strictly preserve aspect ratio with uniform scaling factor
+        let targetWidth = originalWidth;
+        let targetHeight = originalHeight;
+
+        if (originalWidth > maxWidth || originalHeight > maxHeight) {
+          const scale = Math.min(maxWidth / originalWidth, maxHeight / originalHeight);
+          targetWidth = Math.max(1, Math.round(originalWidth * scale));
+          targetHeight = Math.max(1, Math.round(originalHeight * scale));
         }
 
         const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           reject(new Error('Canvas context unavailable'));
           return;
         }
 
-        // Use high quality image rendering
+        // High quality rendering
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
         // Try WebP first for superior compression, fallback to JPEG
         let dataUrl = '';
@@ -60,8 +63,7 @@ export const compressImageToDataUrl = (
           dataUrl = canvas.toDataURL('image/jpeg', quality);
         }
 
-        // If WebP is not supported or yielded a huge size, ensure JPEG fallback
-        if (!dataUrl.startsWith('data:image/webp') && !dataUrl.startsWith('data:image/jpeg')) {
+        if (!dataUrl || (!dataUrl.startsWith('data:image/webp') && !dataUrl.startsWith('data:image/jpeg'))) {
           dataUrl = canvas.toDataURL('image/jpeg', quality);
         }
 
@@ -72,8 +74,8 @@ export const compressImageToDataUrl = (
         resolve({
           dataUrl,
           sizeBytes,
-          width,
-          height
+          width: targetWidth,
+          height: targetHeight
         });
       };
       img.src = e.target?.result as string;
