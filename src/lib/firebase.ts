@@ -29,8 +29,15 @@ async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Please check your Firebase configuration.');
+    if (error instanceof Error) {
+      if (error.message.includes('not found') || error.message.includes('(default)')) {
+        console.warn(
+          `[Firebase Notice] Firestore database not yet created in project "${firebaseConfig.projectId}". ` +
+          `Go to Firebase Console (https://console.firebase.google.com) > Build > Firestore Database > click "Create database" to enable database storage.`
+        );
+      } else if (error.message.includes('the client is offline')) {
+        console.warn('Firebase is offline. Please verify network connectivity and Firebase configuration.');
+      }
     }
   }
 }
@@ -61,12 +68,20 @@ export interface FirestoreErrorInfo {
       email: string | null;
       photoUrl: string | null;
     }[];
-  }
+  };
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMsg = error instanceof Error ? error.message : String(error);
+  
+  // Gracefully handle database not created yet in Firebase Console
+  if (errMsg.includes('(default)') || errMsg.includes('not found')) {
+    console.warn(`[Firestore Notice] Database not yet created on project "${firebaseConfig.projectId}". Create database in Firebase Console to enable persistent live sync.`);
+    return;
+  }
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -83,6 +98,5 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore Operation Notice: ', JSON.stringify(errInfo));
 }
